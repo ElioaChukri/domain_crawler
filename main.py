@@ -1,6 +1,6 @@
 from helpers import *
 from multiprocessing import cpu_count
-import requests
+from concurrent.futures import ThreadPoolExecutor
 import threading
 import sys
 
@@ -14,19 +14,30 @@ DOMAIN = sys.argv[1]
 
 
 def main():
-	dirs, subdomains = loadFiles()
-	max_processes = cpu_count() - 2 if cpu_count() >= 4 else 1
-	threads = []
-	for i in range(max_processes):
-		if i % 2 == 0:
-			t = threading.Thread(target=scrapeDirs, args=dirs)
-		else:
-			t = threading.Thread(target=scrapeDomains, args=subdomains)
-		threads.append(t)
-		t.start()
+	# Initializing the lists that we will use to store the valid directories and subdomains
+	valid_dirs = []
+	valid_subdomains = []
 
-	for t in threads:
-		t.join()
+	# Loading the directories and subdomains from the files
+	dirs, subdomains = loadFiles()
+
+	# Dividing the directories and subdomains into lists of equal size for multithreading
+	# The iteration through the list is done in steps of max_processes, ensuring that each
+	# thread gets a different set of directories/subdomains
+	max_processes = cpu_count() - 2 if cpu_count() >= 4 else 1
+	divided_dirs = [dirs[i::max_processes] for i in range(max_processes)]
+	divided_subdomains = [subdomains[i::max_processes] for i in range(max_processes)]
+
+	# Multithreading the crawling of the directories and subdomains
+	with ThreadPoolExecutor(max_workers=max_processes) as executor:
+		dir_workers = [executor.submit(crawlDirs, divided_dir) for divided_dir in divided_dirs]
+		domain_workers = [executor.submit(crawlDomain, divided_subdomain) for divided_subdomain in divided_subdomains]
+
+		# Adding the resulting lists from the function calls to the valid_dirs and valid_subdomains lists
+		for worker in dir_workers:
+			valid_dirs.extend(worker.result())
+		for worker in domain_workers:
+			valid_subdomains.extend(worker.result())
 
 
 def loadFiles():

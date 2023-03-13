@@ -1,9 +1,6 @@
+import threading
 import requests
 from main import DOMAIN
-
-
-def scrapeDirs(dirs):
-	valid_dirs = crawlDirs(dirs)
 
 
 def crawlDirs(dirs):
@@ -16,10 +13,6 @@ def crawlDirs(dirs):
 		else:
 			continue
 	return valid_dirs
-
-
-def scrapeDomains(subdomains):
-	valid_subdomains = crawlDomain(subdomains)
 
 
 def crawlDomain(subdomains):
