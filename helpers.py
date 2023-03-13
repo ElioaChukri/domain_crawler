@@ -1,3 +1,4 @@
+from threading import current_thread
 from logger import logger
 import json
 import os
@@ -67,13 +68,13 @@ def crawlDirs(dirs):
 
 		count += 1
 		if count % 100 == 0:
-			logger.info(f"Checked {count} directories")
+			logger.info(f"Checked {count} directories in thread {current_thread().name}")
 
 		url = f"https://{DOMAIN}/{directory}"
 		request = requests.get(url)
 		if request.status_code == 202:
 			valid_dirs.append(url)
-			logger.info(f"Found valid directory: {url}")
+			logger.info(f"Found valid directory: {url} on thread {current_thread().name}")
 		else:
 			continue
 	return valid_dirs
@@ -95,13 +96,13 @@ def crawlDomain(subdomains):
 
 		count += 1
 		if count % 100 == 0:
-			logger.info(f"Checked {count} subdomains")
+			logger.info(f"Checked {count} subdomains in thread {current_thread().name}")
 
 		url = f"https://{subdomain}.{DOMAIN}"
 		request = requests.get(url)
 		if request.status_code == 202:
 			valid_subdomains.append(url)
-			logger.info(f"Found valid subdomain: {url}")
+			logger.info(f"Found valid subdomain: {url} on thread {current_thread().name}")
 
 			files = getFiles(url, request.text)
 			file_dict.update(files)
@@ -126,5 +127,5 @@ def getFiles(url, html):
 	files = re.findall(pattern, html)
 	file_dict[url] = []
 	file_dict[url].append(url + file for file in files)
-	logger.info(f"Found {len(files)} files for {url}")
+	logger.info(f"Found {len(files)} files for {url} on thread {current_thread().name}")
 	return file_dict
