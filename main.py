@@ -1,11 +1,9 @@
 from helpers import *
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
-import threading
 import sys
 
 # TODO: Implement logging for different HTML status codes (timeout, not found, etc..)
-# TODO: Implement locking and unlocking for multithreading
 
 if len(sys.argv) != 2:
 	sys.exit("Usage: python3 main.py <domain>")
@@ -14,9 +12,10 @@ DOMAIN = sys.argv[1]
 
 
 def main():
-	# Initializing the lists that we will use to store the valid directories and subdomains
+	# Initializing the lists and dictionary that we will use to store the valid directories, subdomains, and files
 	valid_dirs = []
 	valid_subdomains = []
+	file_dict = {}
 
 	# Loading the directories and subdomains from the files
 	dirs, subdomains = loadFiles()
@@ -33,18 +32,15 @@ def main():
 		dir_workers = [executor.submit(crawlDirs, divided_dir) for divided_dir in divided_dirs]
 		domain_workers = [executor.submit(crawlDomain, divided_subdomain) for divided_subdomain in divided_subdomains]
 
-		# Adding the resulting lists from the function calls to the valid_dirs and valid_subdomains lists
+		# Adding the resulting lists and dicts from the function calls to the valid_dirs
+		# and valid_subdomains lists and the file_dict dict
 		for worker in dir_workers:
 			valid_dirs.extend(worker.result())
 		for worker in domain_workers:
-			valid_subdomains.extend(worker.result())
+			valid_subdomains, file_dict = worker.result()
+			valid_subdomains.extend(valid_subdomains)
+			file_dict.update(file_dict)
+
+	writeFiles(valid_dirs, valid_subdomains, file_dict)
 
 
-def loadFiles():
-	with open("input_files/dirs_dictionary.bat", "r") as f1:
-		dirs = f1.read().splitlines()
-
-	with open("input_files/subdomains_dictionary.bat") as f2:
-		subdomains = f2.read().splitlines()
-
-	return dirs, subdomains
