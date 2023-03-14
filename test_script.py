@@ -13,8 +13,8 @@ import sys
 
 # TODO: Implement logging for different HTML status codes (timeout, not found, etc..)
 
-# if len(sys.argv) != 2:
-# 	sys.exit("Usage: python3 test_script.py <domain>")
+if len(sys.argv) != 2:
+	sys.exit("Usage: python3 test_script.py <domain>")
 
 DOMAIN = "ctflearn.com"  # sys.argv[1]
 
@@ -47,14 +47,14 @@ def main():
 	# and using list comprehension to run each thread on a different set of directories/subdomains
 	with ThreadPoolExecutor(max_workers=max_processes) as executor:
 		logger.debug("Starting threads")
-		# dir_workers = [executor.submit(crawlDirs, divided_dir) for divided_dir in divided_dirs]
+		dir_workers = [executor.submit(crawlDirs, divided_dir) for divided_dir in divided_dirs]
 		domain_workers = [executor.submit(crawlDomain, divided_subdomain) for divided_subdomain in divided_subdomains]
 
 		# Adding the resulting lists and dicts from the function calls to the valid_dirs
 		# and valid_subdomains lists and the file_dict dict
-		# for worker in dir_workers:
-		# 	valid_dirs.extend(worker.result())
-		# logger.debug("Added valid directories to main list")
+		for worker in dir_workers:
+			valid_dirs.extend(worker.result())
+		logger.debug("Added valid directories to main list")
 
 		for worker in domain_workers:
 			valid_subdomains, file_dict = worker.result()

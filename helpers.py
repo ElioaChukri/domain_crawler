@@ -8,7 +8,6 @@ from test_script import DOMAIN
 
 
 def loadFiles():
-
 	"""
 	Loads the directories and subdomains from the files
 	"""
@@ -23,7 +22,6 @@ def loadFiles():
 
 
 def writeFiles(valid_dirs, valid_subdomains, file_dict):
-
 	"""
 	Writes the valid directories, subdomains, and files to the output_files directory
 	If the directory output_files does not exist, it will be created
@@ -54,7 +52,6 @@ def writeFiles(valid_dirs, valid_subdomains, file_dict):
 
 
 def crawlDirs(dirs):
-
 	"""
 	Queries all the possible directories listed in the file given and returns
 	a list of directories that return a 202 status code
@@ -73,7 +70,7 @@ def crawlDirs(dirs):
 
 		url = f"https://{DOMAIN}/{directory}"
 		request = requests.get(url)
-		if request.status_code == 202:
+		if request.status_code in [200, 201, 202, 203, 204, 205, 206]:
 			valid_dirs.append(url)
 			logger.info(f"Found valid directory: {url} on thread number {thread_number}")
 		else:
@@ -82,7 +79,6 @@ def crawlDirs(dirs):
 
 
 def crawlDomain(subdomains):
-
 	"""
 	Queries all the possible subdomains listed in the file given and returns
 	a list of subdomains that return a 202 status code
@@ -94,23 +90,22 @@ def crawlDomain(subdomains):
 	valid_subdomains = []
 	file_dict = {}
 	count = 0
-	logger.info(f"Starting subdomain crawl on thread number  {thread_number}")
 	for subdomain in subdomains:
 
 		count += 1
-		if count % 100 == 0:
+		if count % 10000 == 0:
 			logger.info(f"Checked {count} subdomains on thread number {thread_number}")
 
 		url = f"https://{subdomain}.{DOMAIN}"
-		if int(thread_number) == 1:
-			logger.info(f"Checking {url} on thread number 1")
+		if not checkUrl(url):
+			continue
 		try:
 			request = requests.get(url)
 			logger.debug("Requesting: " + url)
 		except requests.exceptions.ConnectionError:
 			logger.debug("Connection error for: " + url)
 			continue
-		if request.status_code == 202:
+		if request.status_code in [200, 201, 202, 203, 204, 205, 206]:
 			valid_subdomains.append(url)
 			logger.info(f"Found valid subdomain: {url} on thread number {thread_number}")
 
@@ -122,10 +117,15 @@ def crawlDomain(subdomains):
 	return valid_subdomains, file_dict
 
 
+def checkUrl(url):
+	pattern = re.compile(rf"https?://([a-zA-Z0-9-]+\.)*{DOMAIN}")
+	if pattern.match(url):
+		return True
+	else:
+		return False
 
 
 def getFiles(url, html):
-
 	"""
 	Scrapes the html for possible files that are being linked to in the html and stores them in a dictionary
 	of key:value pairs equivalent to url:file
