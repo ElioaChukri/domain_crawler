@@ -1,6 +1,4 @@
 from threading import current_thread
-from logger import logger
-import json
 import os
 import requests
 from test_script import DOMAIN, count_dir, count_domain
@@ -62,7 +60,6 @@ def crawlDirs(dirs):
 	:return valid_dirs: list
 	"""
 
-	thread_number = str(current_thread().name[-1])
 	valid_dirs = []
 	for directory in dirs:
 
@@ -88,7 +85,6 @@ def crawlDomain(subdomains):
 	:return valid_subdomains: list
 	"""
 
-	thread_number = str(current_thread().name[-1])
 	valid_subdomains = []
 	for subdomain in subdomains:
 
@@ -114,11 +110,9 @@ def crawlDomain(subdomains):
 
 def getFiles(url):
 	"""
-	Scrapes the html for possible files that are being linked to in the html and stores them in a dictionary
-	of key:value pairs equivalent to url:file
+	Scrapes the html for files that are being linked to in the html and stores them in a list
 	:param url: str
-	:param html: str
-	:return file_dict: dict
+	:return files: list
 	"""
 
 	html = requests.get(url).text
