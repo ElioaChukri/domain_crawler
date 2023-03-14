@@ -5,6 +5,7 @@ import os
 import re
 import requests
 from test_script import DOMAIN
+from filter import *
 
 
 def loadFiles():
@@ -115,14 +116,6 @@ def crawlDomain(subdomains):
 		else:
 			continue
 	return valid_subdomains, file_dict
-
-
-def checkUrl(url):
-	pattern = re.compile(rf"https?://([a-zA-Z0-9-]+\.)*{DOMAIN}")
-	if pattern.match(url):
-		return True
-	else:
-		return False
 
 
 def getFiles(url, html):
