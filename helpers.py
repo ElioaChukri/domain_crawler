@@ -62,19 +62,20 @@ def crawlDirs(dirs):
 	:return valid_dirs: list
 	"""
 
+	thread_number = str(current_thread().name[-1])
 	valid_dirs = []
 	count = 0
 	for directory in dirs:
 
 		count += 1
 		if count % 100 == 0:
-			logger.info(f"Checked {count} directories in thread {current_thread().name}")
+			logger.info(f"Checked {count} directories in thread number {thread_number}")
 
 		url = f"https://{DOMAIN}/{directory}"
 		request = requests.get(url)
 		if request.status_code == 202:
 			valid_dirs.append(url)
-			logger.info(f"Found valid directory: {url} on thread {current_thread().name}")
+			logger.info(f"Found valid directory: {url} on thread number {thread_number}")
 		else:
 			continue
 	return valid_dirs
@@ -89,20 +90,29 @@ def crawlDomain(subdomains):
 	:return valid_subdomains: list
 	"""
 
+	thread_number = str(current_thread().name[-1])
 	valid_subdomains = []
 	file_dict = {}
 	count = 0
+	logger.info(f"Starting subdomain crawl on thread number  {thread_number}")
 	for subdomain in subdomains:
 
 		count += 1
 		if count % 100 == 0:
-			logger.info(f"Checked {count} subdomains in thread {current_thread().name}")
+			logger.info(f"Checked {count} subdomains on thread number {thread_number}")
 
 		url = f"https://{subdomain}.{DOMAIN}"
-		request = requests.get(url)
+		if int(thread_number) == 1:
+			logger.info(f"Checking {url} on thread number 1")
+		try:
+			request = requests.get(url)
+			logger.debug("Requesting: " + url)
+		except requests.exceptions.ConnectionError:
+			logger.debug("Connection error for: " + url)
+			continue
 		if request.status_code == 202:
 			valid_subdomains.append(url)
-			logger.info(f"Found valid subdomain: {url} on thread {current_thread().name}")
+			logger.info(f"Found valid subdomain: {url} on thread number {thread_number}")
 
 			files = getFiles(url, request.text)
 			file_dict.update(files)
@@ -110,6 +120,8 @@ def crawlDomain(subdomains):
 		else:
 			continue
 	return valid_subdomains, file_dict
+
+
 
 
 def getFiles(url, html):

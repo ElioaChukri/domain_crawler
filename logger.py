@@ -2,15 +2,15 @@ import logging
 
 # Create a logger object
 logger = logging.getLogger('example_logger')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # Create a file handler that writes log messages to a file
 file_handler = logging.FileHandler('example.log')
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.INFO)
 
 # Create a stream handler that writes log messages to the console
 stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.DEBUG)
+stream_handler.setLevel(logging.INFO)
 
 # Create a formatter to format the log messages
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
