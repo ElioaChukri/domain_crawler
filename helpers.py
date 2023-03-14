@@ -2,9 +2,8 @@ from threading import current_thread
 from logger import logger
 import json
 import os
-import re
 import requests
-from test_script import DOMAIN
+from test_script import DOMAIN, count_dir, count_domain
 from filter import *
 
 
@@ -14,21 +13,23 @@ def loadFiles():
 	"""
 
 	with open("input_files/dirs_dictionary.bat", "r") as f1:
-		dirs = f1.read().splitlines()
+		dirs = f1.read().lower().splitlines()
 
 	with open("input_files/subdomains_dictionary.bat", "r") as f2:
-		subdomains = f2.read().splitlines()
+		subdomains = f2.read().lower().splitlines()
 
+	dirs = list(set(dirs))
+	subdomains = list(set(subdomains))
 	return dirs, subdomains
 
 
-def writeFiles(valid_dirs, valid_subdomains, file_dict):
+def writeFiles(valid_dirs, valid_subdomains, files):
 	"""
 	Writes the valid directories, subdomains, and files to the output_files directory
 	If the directory output_files does not exist, it will be created
-	:param valid_dirs:
-	:param valid_subdomains:
-	:param file_dict:
+	:param valid_dirs: list
+	:param valid_subdomains: list
+	:param files: list
 	:return: void
 	"""
 
@@ -43,13 +44,14 @@ def writeFiles(valid_dirs, valid_subdomains, file_dict):
 		logger.debug("Wrote valid directories to file: " + f1.name)
 
 	with open("output_files/valid_subdomains.bat", "w") as f2:
-		for folder in valid_subdomains:
-			f2.write(folder + "\n")
+		for domain in valid_subdomains:
+			f2.write(domain + "\n")
 		logger.debug("Wrote valid subdomains to file: " + f2.name)
 
 	with open("output_files/files.bat", "w") as f3:
-		json.dump(file_dict, f3, indent=4)
-		logger.debug("Wrote files to file: " + f3.name)
+		for file in files:
+			f3.write(file + "\n")
+		logger.debug("Wrote all all files found to file: " + f3.name)
 
 
 def crawlDirs(dirs):
@@ -62,18 +64,17 @@ def crawlDirs(dirs):
 
 	thread_number = str(current_thread().name[-1])
 	valid_dirs = []
-	count = 0
 	for directory in dirs:
 
-		count += 1
-		if count % 100 == 0:
-			logger.info(f"Checked {count} directories in thread number {thread_number}")
+		count_dir.value += 1
+		if count_dir.value % 100 == 0:
+			logger.info(f"Checked {count_dir.value} directories")
 
 		url = f"https://{DOMAIN}/{directory}"
 		request = requests.get(url)
 		if request.status_code in [200, 201, 202, 203, 204, 205, 206]:
 			valid_dirs.append(url)
-			logger.info(f"Found valid directory: {url} on thread number {thread_number}")
+			logger.info(f"Found valid directory: {url}")
 		else:
 			continue
 	return valid_dirs
@@ -89,36 +90,29 @@ def crawlDomain(subdomains):
 
 	thread_number = str(current_thread().name[-1])
 	valid_subdomains = []
-	file_dict = {}
-	count = 0
 	for subdomain in subdomains:
 
-		count += 1
-		if count % 10000 == 0:
-			logger.info(f"Checked {count} subdomains on thread number {thread_number}")
+		count_domain.value += 1
+		logger.debug("Count is " + str(count_domain.value))
+		if count_domain.value % 10000 == 0:
+			logger.info(f"Checked {count_domain.value} subdomains")
 
 		url = f"https://{subdomain}.{DOMAIN}"
 		if not checkUrl(url):
 			continue
 		try:
 			request = requests.get(url)
-			logger.debug("Requesting: " + url)
 		except requests.exceptions.ConnectionError:
-			logger.debug("Connection error for: " + url)
 			continue
 		if request.status_code in [200, 201, 202, 203, 204, 205, 206]:
 			valid_subdomains.append(url)
-			logger.info(f"Found valid subdomain: {url} on thread number {thread_number}")
-
-			files = getFiles(url, request.text)
-			file_dict.update(files)
-
+			logger.info(f"Found valid subdomain: {url}")
 		else:
 			continue
-	return valid_subdomains, file_dict
+	return valid_subdomains
 
 
-def getFiles(url, html):
+def getFiles(url):
 	"""
 	Scrapes the html for possible files that are being linked to in the html and stores them in a dictionary
 	of key:value pairs equivalent to url:file
@@ -127,10 +121,8 @@ def getFiles(url, html):
 	:return file_dict: dict
 	"""
 
-	file_dict = {}
-	pattern = r'href="(.+?)"'
-	files = re.findall(pattern, html)
-	file_dict[url] = []
-	file_dict[url].append(url + file for file in files)
-	logger.info(f"Found {len(files)} files for {url} on thread {current_thread().name}")
-	return file_dict
+	html = requests.get(url).text
+	links = getLinks(html)
+	files = getValidFiles(links)
+	logger.debug(f"Found {len(files)} files for {url}")
+	return files

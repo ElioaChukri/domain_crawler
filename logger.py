@@ -2,11 +2,11 @@ import logging
 
 # Create a logger object
 logger = logging.getLogger('example_logger')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # Create a file handler that writes log messages to a file
 file_handler = logging.FileHandler('example.log')
-file_handler.setLevel(logging.INFO)
+file_handler.setLevel(logging.DEBUG)
 
 # Create a stream handler that writes log messages to the console
 stream_handler = logging.StreamHandler()
