@@ -1,6 +1,5 @@
 import re
 from test_script import DOMAIN
-from logger import logger
 
 
 def checkUrl(url):

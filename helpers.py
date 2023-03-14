@@ -1,7 +1,7 @@
-from threading import current_thread
 import os
 import requests
-from test_script import DOMAIN, count_dir, count_domain
+from test_script import count_dir, count_domain
+from logger import logger
 from filter import *
 
 

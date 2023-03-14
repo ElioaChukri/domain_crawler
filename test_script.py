@@ -11,8 +11,6 @@ from multiprocessing import cpu_count, Manager
 from concurrent.futures import ThreadPoolExecutor
 import sys
 
-# TODO: Implement logging for different HTML status codes (timeout, not found, etc..)
-
 # Check for argument presence and set DOMAIN to the first argument given
 if len(sys.argv) != 2:
 	sys.exit("Usage: python3 test_script.py <domain>")
@@ -34,7 +32,6 @@ def main():
 	logger.debug("Program started")
 	valid_dirs = []
 	valid_subdomains = []
-	files = []
 
 	# Loading the directories and subdomains from the files
 	dirs, subdomains = loadFiles()
@@ -74,7 +71,7 @@ def main():
 		logger.debug("Got files from domain")
 
 		for worker in domain_workers:
-			valid_subdomains = worker.result() # Gets resulting list from the function call
+			valid_subdomains = worker.result()  # Gets resulting list from the function call
 			valid_subdomains.extend(valid_subdomains)
 		logger.debug("Added valid subdomains to main list")
 
