@@ -1,4 +1,3 @@
-
 """
 ------------------------------------------------------------------------------------------------------------------------
 Author name: Elio Anthony Chukri
@@ -14,11 +13,19 @@ from cracking import bruteForce, checkHydra
 import sys
 
 # Check for argument presence and set DOMAIN to the first argument given
-if len(sys.argv) != 2:
-	sys.exit("Usage: python3 test_script.py <domain>")
+if len(sys.argv) < 2:
+	sys.exit("Usage: python3 test_script.py <domain> [-t <threads>]")
+elif len(sys.argv) == 4:
+	if sys.argv[2] == "-t":
+		try:
+			int(sys.argv[3])
+		except ValueError:
+			sys.exit("Invalid number of threads entered")
+elif len(sys.argv) == 3:
+	sys.exit("Invalid parameters entered\n\nUsage: python3 test_script.py <domain> [-t <threads>]")
 else:
 	DOMAIN = sys.argv[1]
-
+	THREADS = int(sys.argv[3])
 
 # Initializing the variables that will be shared by all thread through a Manager object
 manager = Manager()
@@ -27,7 +34,6 @@ count_domain = manager.Value('i', 0)
 
 
 def main():
-
 	# Check if the domain entered is valid
 	if not validateDomain(DOMAIN):
 		sys.exit("Invalid domain entered\n")
@@ -52,7 +58,11 @@ def main():
 	thread gets a different set of directories/subdomains
 	"""
 
-	max_processes = 6  # cpu_count() - 2 if cpu_count() >= 4 else 1
+	if THREADS > cpu_count():
+		threads = cpu_count()
+		logger.debug("Number of threads entered is greater than the number of cores on your system, using " + str(
+			threads) + " threads instead")
+	max_processes = sys.argv[2] if len(sys.argv) > 2 else cpu_count() - 2 if cpu_count() > 2 else 1
 	logger.debug("Using " + str(max_processes) + " threads")
 	divided_dirs = [dirs[i::max_processes] for i in range(max_processes)]
 	divided_subdomains = [subdomains[i::max_processes] for i in range(max_processes)]
