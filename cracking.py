@@ -124,7 +124,7 @@ def postTask(valid_dirs, valid_subdomains):
 def main():
 
 	if len(sys.argv) != 2:
-		sys.exit("Usage: python3 cracking.py <input_file>")
+		sys.exit("Usage: python cracking.py <input_file>")
 	else:
 		input_file = sys.argv[1]
 
