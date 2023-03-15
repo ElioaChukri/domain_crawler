@@ -1,8 +1,39 @@
+"""
+This file contains all the helper functions used in the main script
+Functions such as loading the directories and subdomains from the files, writing the results to the output_files
+directory, and the functions that are used to crawl the directories and subdomains
+"""
+
 import os
 import requests
 from test_script import count_dir, count_domain
 from logger import logger
 from filter import *
+
+
+def validateDomain(domain):
+	"""
+	Checks if the domain given is valid. It is valid if it returns a 200 status code
+	Args:
+		domain (str): Domain to check
+	Returns:
+		True if the domain is valid, False otherwise
+	"""
+	pattern = re.compile(r"[^a-zA-Z0-9.-]")
+	if pattern.match(domain):
+		return False
+	request = requests.get("https://" + domain)
+	if request.status_code in [200, 201, 202, 203, 204, 205, 206]:
+		return True
+	else:
+		return False
+
+
+def checkFileExists(file):
+	if os.path.isfile(file):
+		return True
+	else:
+		return False
 
 
 def loadFiles():
@@ -25,10 +56,12 @@ def writeFiles(valid_dirs, valid_subdomains, files):
 	"""
 	Writes the valid directories, subdomains, and files to the output_files directory
 	If the directory output_files does not exist, it will be created
-	:param valid_dirs: list
-	:param valid_subdomains: list
-	:param files: list
-	:return: void
+	Args:
+		valid_dirs (list): List of valid directories
+		valid_subdomains (list): List of valid subdomains
+		files (list): List of all files found
+	Returns:
+		None
 	"""
 
 	directory = "output_files"
@@ -56,40 +89,59 @@ def crawlDirs(dirs):
 	"""
 	Queries all the possible directories listed in the file given and returns
 	a list of directories that return a 202 status code
-	:param dirs: list
-	:return valid_dirs: list
+	Args:
+		dirs (list): List of directories to query
+	Returns:
+		valid_dirs (list): List of valid directories
 	"""
 
 	valid_dirs = []
+	post_urls = []
 	for directory in dirs:
 
 		count_dir.value += 1
-		if count_dir.value % 100 == 0:
+		if count_dir.value % 10 == 0:
+			logger.debug(f"Checked {count_dir.value} directories")
+		if count_dir.value % 500 == 0:
 			logger.info(f"Checked {count_dir.value} directories")
 
 		url = f"https://{DOMAIN}/{directory}"
-		request = requests.get(url)
+		try:
+			request = requests.get(url)
+		except requests.exceptions.ConnectionError:
+			continue
 		if request.status_code in [200, 201, 202, 203, 204, 205, 206]:
 			valid_dirs.append(url)
 			logger.info(f"Found valid directory: {url}")
+			if not "Allow" in request.headers:
+				continue
+			if "POST" in request.headers.get("Allow"):
+				logger.debug(f"Found POST request at {url}")
+				result = handlePost(url)
+				if result == 0:
+					post_urls.append(result)
 		else:
 			continue
-	return valid_dirs
+	return valid_dirs, post_urls
 
 
 def crawlDomain(subdomains):
 	"""
 	Queries all the possible subdomains listed in the file given and returns
 	a list of subdomains that return a 202 status code
-	:param subdomains: list
-	:return valid_subdomains: list
+	Args:
+		subdomains (list): List of subdomains to query
+	Returns:
+		valid_subdomains (list): List of valid subdomains
 	"""
 
 	valid_subdomains = []
+	post_urls = []
 	for subdomain in subdomains:
 
 		count_domain.value += 1
-		logger.debug("Count is " + str(count_domain.value))
+		if count_domain.value % 100 == 0:
+			logger.debug(f"Checked {count_domain.value} subdomains")
 		if count_domain.value % 10000 == 0:
 			logger.info(f"Checked {count_domain.value} subdomains")
 
@@ -103,16 +155,25 @@ def crawlDomain(subdomains):
 		if request.status_code in [200, 201, 202, 203, 204, 205, 206]:
 			valid_subdomains.append(url)
 			logger.info(f"Found valid subdomain: {url}")
+			if not "Allow" in request.headers:
+				continue
+			if "POST" in request.headers.get("Allow"):
+				logger.debug(f"Found POST request at {url}")
+				result = handlePost(url)
+				if result == 0:
+					post_urls.append(result)
 		else:
 			continue
-	return valid_subdomains
+	return valid_subdomains, post_urls
 
 
 def getFiles(url):
 	"""
 	Scrapes the html for files that are being linked to in the html and stores them in a list
-	:param url: str
-	:return files: list
+	Args:
+		url (str): URL to scrape for files
+	Returns:
+		files (list): List of files found
 	"""
 
 	html = requests.get(url).text
@@ -120,3 +181,22 @@ def getFiles(url):
 	files = getValidFiles(links)
 	logger.debug(f"Found {len(files)} files for {url}")
 	return files
+
+
+def handlePost(url):
+	"""
+	Handles POST requests by checking if the POST request requires authentication
+	Args:
+		url (str): URL to check for POST request
+	Returns:
+		0 if POST request requires authentication
+		1 if POST request does not require authentication
+	"""
+	request = requests.post(url)
+	if request.status_code in [401, 403]:
+		logger.debug(f"{url} requires authentication, proceeding with brute force")
+		return 0
+	else:
+		logger.debug(f"{url} supports POST but does not require authentication")
+		return 1
+

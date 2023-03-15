@@ -1,3 +1,9 @@
+
+"""
+This module contains a logger object that can be used to log messages to a file and the console.
+You can edit the .setLevel() method to change the level of the messages that are logged.
+"""
+
 import logging
 
 # Create a logger object

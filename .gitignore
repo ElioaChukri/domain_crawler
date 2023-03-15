@@ -1,4 +1,8 @@
+# Exclude .idea directory
 .idea
+
+# Exclude output_files directory
+output_files
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
