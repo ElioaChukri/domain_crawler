@@ -4,6 +4,9 @@
 # Exclude output_files directory
 output_files
 
+# Exclude rockyou.txt
+input_files/rockyou.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
