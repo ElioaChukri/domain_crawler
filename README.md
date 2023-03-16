@@ -53,7 +53,7 @@ The password cracker is optional and can be used by adding any of the two -u or 
 It can also be run independently by running the password_cracker.py script.
 When run independently, the password cracker will check the urls present in the output_files/valid_dirs.bat and
 output_files/valid_subdomains.bat
-directory for any password protected POST endpoints. It will then attempt to crack the password of the given endpoint
+for any password protected POST endpoints. It will then attempt to crack the password of the given endpoint
 using the given wordlist.
 
 ```python password_cracker.py -u <username> -p <password_file>```
