@@ -9,8 +9,12 @@ import concurrent.futures
 from helpers import *
 from multiprocessing import cpu_count, Manager
 from concurrent.futures import ThreadPoolExecutor
-from cracking import bruteForce, checkHydra
+from password_cracker import bruteForce, checkHydra
 import sys
+
+# TODO: Add a progress bar to show the progress of the program
+# TODO: Add option to specify output directory for the files
+# TODO: Add CLI argument to specify whether progress bar or logs should be shown, including an option to set debug level
 
 # Check for argument presence and set DOMAIN to the first argument given
 if len(sys.argv) < 2:
