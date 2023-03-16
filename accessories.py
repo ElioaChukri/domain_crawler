@@ -40,6 +40,9 @@ def parseArguments():
 	# Required argument: domain
 	parser.add_argument("domain", help="Specify a domain")
 
+	# Optional argument: output_dir
+	parser.add_argument("-o", "--output_dir", help="Specify the output directory", default="output_files")
+
 	# Optional argument: threads
 	parser.add_argument("-t", "--threads",
 	                    type=int, default=cpu_count() - 2 if cpu_count() > 4 else 1,

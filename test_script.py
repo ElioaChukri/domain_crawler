@@ -15,10 +15,6 @@ import sys
 import threading
 from tqdm import tqdm
 
-# TODO: Add option to specify output directory for the files
-# TODO: Add CLI argument to specify whether progress bar or logs should be shown, including an option to set debug level
-
-
 # Initializing the variables that will be shared by all thread through a Manager object
 manager = Manager()
 count_dir = manager.Value('i', 0)
@@ -82,7 +78,7 @@ def main():
 	"""
 	num_dirs = len(dirs)
 	# Start threads work to crawl directories, return them, and append them to the list
-	with tqdm(total=num_dirs, desc="Crawling dirs", unit="dirs", dynamic_ncols=True, smoothing=0.1)\
+	with tqdm(total=num_dirs, desc="Crawling dirs", unit="dirs", dynamic_ncols=True, smoothing=0.1) \
 			as progress_bar, \
 			ThreadPoolExecutor(max_workers=max_processes) as executor:
 		lock = threading.Lock()
@@ -127,46 +123,41 @@ def main():
 	)
 
 	# Asking the user if they want to brute force the directories and subdomains that support POST request
-	while True:
-		choice = input(
-			"Would you like to brute force the directories and subdomains that support POST request? (y/n): ")
-		if choice.lower() == "y":
-			if not checkHydra():
-				print("Hydra is not installed on your system, cannot proceed with brute force")
+
+	if (args.username or args.password_file) and not checkHydra():
+		print("Hydra is not installed on your system, cannot proceed with brute force. You can install Hydra"
+		      " and then rerun the attack as a standalone script by typing 'python password_cracker.py'")
+		sys.exit(1)
+
+	if not args.username:
+		username = input("Enter username: ")
+	else:
+		username = args.username
+
+	if args.password_file:
+		password_file = args.password_file
+	else:
+		while True:
+			password_file = input("Enter password file: ")
+
+			# Checking if the file exists
+			if not checkFileExists(password_file):
+				try:
+					print("File does not exist, please try again or press CTRL-D to exit\n")
+				except EOFError:
+					print("Exiting program...")
+					sys.exit(0)
+				continue
+
+			else:  # File exists
 				break
 
-			if not args.username:
-				username = input("Enter username: ")
-			else:
-				username = args.username
+	logger.info("Starting brute force")
+	bruteForce(post_dirs, username, password_file)
+	logger.debug("Brute force completed")
+	logger.debug("Exiting program")
 
-			if args.password_file:
-				password_file = args.password_file
-			else:
-				while True:
-					password_file = input("Enter password file: ")
-
-					# Checking if the file exists
-					if not checkFileExists(password_file):
-						try:
-							print("File does not exist, please try again or press CTRL-D to exit\n")
-						except EOFError:
-							print("Exiting...")
-							sys.exit(0)
-						continue
-
-					else:  # File exists
-						break
-
-			logger.info("Starting brute force")
-			bruteForce(post_dirs, username, password_file)
-			break
-		elif choice.lower() == "n":
-			logger.info("User chose not to brute force")
-			break
-		else:
-			print("Invalid choice, please try again\n")
-		print("Exiting program...")
+	print("Exiting program...")
 
 
 if __name__ == "__main__":

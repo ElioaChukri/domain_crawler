@@ -64,22 +64,22 @@ def writeFiles(valid_dirs, valid_subdomains, files):
 		None
 	"""
 
-	directory = "output_files"
+	directory = args.output_dir
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 		logger.debug("Created directory: " + directory)
 
-	with open("output_files/valid_dirs.bat", "w") as f1:
+	with open(f"{directory}/valid_dirs.bat", "w") as f1:
 		for folder in valid_dirs:
 			f1.write(folder + "\n")
 		logger.debug("Wrote valid directories to file: " + f1.name)
 
-	with open("output_files/valid_subdomains.bat", "w") as f2:
+	with open(f"{directory}/valid_subdomains.bat", "w") as f2:
 		for domain in valid_subdomains:
 			f2.write(domain + "\n")
 		logger.debug("Wrote valid subdomains to file: " + f2.name)
 
-	with open("output_files/files.bat", "w") as f3:
+	with open(f"{directory}/files.bat", "w") as f3:
 		for file in files:
 			f3.write(file + "\n")
 		logger.debug("Wrote all all files found to file: " + f3.name)
