@@ -4,9 +4,10 @@ This module contains functions that are used to filter the links and files from 
 """
 
 import re
+from test_script import args
 
 
-def checkUrl(url, args):
+def checkUrl(url):
 	"""
 	Checks if the url is valid
 	Args:
