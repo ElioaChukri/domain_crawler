@@ -8,11 +8,13 @@ import argparse
 from multiprocessing import cpu_count
 
 
-def createLogger(args):
+def createCrackLogger():
+	pass
+
+
+def createLogger():
 	"""
 	Creates a logger object that can be used to log messages to a file and the console
-	Args:
-		args (argparse.Namespace): Object storing all CLI arguments
 	Returns:
 		logger (logging.Logger): Logger object
 	"""
@@ -22,13 +24,6 @@ def createLogger(args):
 	# Create a logger object
 	logger = logging.getLogger('output')
 	logger.setLevel(logging.DEBUG)
-
-	# Create a stream handler that writes log messages to the console
-	if args.logs:
-		stream_handler = logging.StreamHandler()
-		stream_handler.setLevel(logging.INFO)
-		stream_handler.setFormatter(formatter)
-		logger.addHandler(stream_handler)
 
 	# Create a file handler that writes log messages to a file
 	file_handler = logging.FileHandler('output.log')
@@ -49,12 +44,6 @@ def parseArguments():
 	parser.add_argument("-t", "--threads",
 	                    type=int, default=cpu_count() - 2 if cpu_count() > 4 else 1,
 	                    help="Specify the number of threads to use")
-
-	# Optional argument: logs
-	parser.add_argument("--logs", nargs="?", const="INFO", default=None,
-	                    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-	                    help="Specify whether the program should display logs "
-	                         "and optionally set the logging level (default: INFO)")
 
 	# Optional argument: username
 	parser.add_argument("-u", "--username", help="Specify the username")

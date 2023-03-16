@@ -7,7 +7,7 @@ directory, and the functions that are used to crawl the directories and subdomai
 import os
 import requests
 # from multiprocessing import cpu_count
-from test_script import count_dir, count_domain, args, logger
+from test_script import count_dir, count_domain, logger
 from filter import *
 
 
@@ -134,6 +134,8 @@ def crawlDomain(subdomains, pbar, lock):
 	Queries all the possible subdomains listed in the file given and returns
 	a list of subdomains that return a 202 status code
 	Args:
+	    lock (threading.Lock): Lock to prevent multiple threads from writing to the same file
+	    pbar (tqdm.tqdm): Progress bar to show the progress of the script
 		subdomains (list): List of subdomains to query
 	Returns:
 		valid_subdomains (list): List of valid subdomains

@@ -28,7 +28,7 @@ count_domain = manager.Value('i', 0)
 args = parseArguments()
 
 # Create a logger object
-logger = createLogger(args)
+logger = createLogger()
 
 
 def main():
@@ -62,7 +62,7 @@ def main():
 		logger.debug("Number of threads entered is greater than the number of cores on your system, using " + str(
 			threads) + " threads instead")
 
-	max_processes = sys.argv[2] if len(sys.argv) > 2 else cpu_count() - 2 if cpu_count() > 2 else 1
+	max_processes = args.threads
 	logger.debug("Using " + str(max_processes) + " threads")
 	divided_dirs = [dirs[i::max_processes] for i in range(max_processes)]
 	divided_subdomains = [subdomains[i::max_processes] for i in range(max_processes)]
@@ -98,7 +98,7 @@ def main():
 
 	num_subdomains = len(subdomains)
 	# Start threads work to crawl subdomains, returns them, and append them to the list
-	with tqdm(total=num_dirs, desc="Crawling subdomains", unit="subdomains", dynamic_ncols=True, smoothing=0.1) \
+	with tqdm(total=num_subdomains, desc="Crawling subdomains", unit="subdomains", dynamic_ncols=True, smoothing=0.1) \
 			as progress_bar, \
 			ThreadPoolExecutor(max_workers=max_processes) as executor:
 		lock = threading.Lock()
@@ -159,7 +159,7 @@ def main():
 						break
 
 			logger.info("Starting brute force")
-			bruteForce(post_dirs, username.password_file)
+			bruteForce(post_dirs, username, password_file)
 			break
 		elif choice.lower() == "n":
 			logger.info("User chose not to brute force")

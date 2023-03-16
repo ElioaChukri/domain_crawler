@@ -7,12 +7,13 @@ It can also be run as a standalone file for the domains listed in output_files/ 
 import sys
 import requests
 import subprocess
-from test_script import logger
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
-
+from accessories import createCrackLogger
 
 # TODO: Add support for standalone command line usage
+logger = createCrackLogger()
+
 
 def bruteForce(post_dirs, username, password_file):
 	"""
