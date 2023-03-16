@@ -16,20 +16,6 @@ import sys
 # TODO: Add option to specify output directory for the files
 # TODO: Add CLI argument to specify whether progress bar or logs should be shown, including an option to set debug level
 
-# Check for argument presence and set DOMAIN to the first argument given
-if len(sys.argv) < 2:
-	sys.exit("Usage: python3 test_script.py <domain> [-t <threads>]")
-elif len(sys.argv) == 4:
-	if sys.argv[2] == "-t":
-		try:
-			int(sys.argv[3])
-		except ValueError:
-			sys.exit("Invalid number of threads entered")
-elif len(sys.argv) == 3:
-	sys.exit("Invalid parameters entered\n\nUsage: python3 test_script.py <domain> [-t <threads>]")
-else:
-	DOMAIN = sys.argv[1]
-	THREADS = int(sys.argv[3])
 
 # Initializing the variables that will be shared by all thread through a Manager object
 manager = Manager()
@@ -38,8 +24,9 @@ count_domain = manager.Value('i', 0)
 
 
 def main():
+	args = parseArguments()
 	# Check if the domain entered is valid
-	if not validateDomain(DOMAIN):
+	if not validateDomain(args.domain):
 		sys.exit("Invalid domain entered\n")
 
 	# Clearing the log file
@@ -47,7 +34,7 @@ def main():
 		f.write("")
 
 	# Initializing the lists and dictionary that we will use to store the valid directories, subdomains, and files
-	logger.info("Program started for domain: " + DOMAIN)
+	logger.info("Program started for domain: " + args.domain)
 	valid_dirs = []
 	valid_subdomains = []
 	post_dirs = []
@@ -62,10 +49,12 @@ def main():
 	thread gets a different set of directories/subdomains
 	"""
 
-	if THREADS > cpu_count():
+	# Checking if number of threads requested is greater than number present on the system
+	if args.thread > cpu_count():
 		threads = cpu_count()
 		logger.debug("Number of threads entered is greater than the number of cores on your system, using " + str(
 			threads) + " threads instead")
+
 	max_processes = sys.argv[2] if len(sys.argv) > 2 else cpu_count() - 2 if cpu_count() > 2 else 1
 	logger.debug("Using " + str(max_processes) + " threads")
 	divided_dirs = [dirs[i::max_processes] for i in range(max_processes)]
@@ -85,6 +74,7 @@ def main():
 	the .as_completed() function ensures that the threads are done before we move on to the next step
 	"""
 
+	# Start threads work to crawl directories, return them, and append them to the list
 	with ThreadPoolExecutor(max_workers=max_processes) as executor:
 		logger.info("Crawling dirs")
 		dir_workers = [executor.submit(crawlDirs, divided_dir) for divided_dir in divided_dirs]
@@ -94,6 +84,7 @@ def main():
 			post_dirs.extend(returned_post1)
 		logger.debug("All threads are done crawling dirs")
 
+	# Start threads work to crawl subdomains, returns them, and append them to the list
 	with ThreadPoolExecutor(max_workers=max_processes) as executor:
 		logger.info("Crawling subdomains")
 		domain_workers = [executor.submit(crawlDomain, divided_subdomain) for divided_subdomain in divided_subdomains]
@@ -104,7 +95,7 @@ def main():
 		logger.debug("All threads are done crawling subdomains")
 
 		# Getting the files from the domain
-		files = getFiles(f"https://{DOMAIN}")
+		files = getFiles(f"https://{args.domain}")
 		logger.debug("Got files from domain")
 
 	# Writing the valid directories, subdomains, and files to their respective files
