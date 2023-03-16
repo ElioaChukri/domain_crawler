@@ -3,7 +3,8 @@
 
 This is a simple crawler that crawls a domain and returns a list of all the links on the domain.
 Makes use of the powerful requests library to make HTTP requests and implements multithreading to speed up the process.
-
+Also includes and optional password cracker script that looks for any POST endpoint on the domain and performs a dictionary
+attack using Hydra. 
 
 ***
 
@@ -36,7 +37,7 @@ valid subdomains, directories, and files, to the output_files directory.
 
 ***
 
-## Password Cracker
+### Password Cracker
 
 This script also includes an optional password cracker. It will attempt to crack the password of a given POST endpoint using a given
 wordlist. It will then output the password to the terminal. The password cracker makes use of the hydra CLI tool to accomplish this.
