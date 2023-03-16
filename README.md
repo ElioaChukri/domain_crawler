@@ -10,7 +10,7 @@ attack using Hydra.
 
  ### Usage
 
-```python test_script.py <domain> [OPTIONS]```
+```python test_script.py <domain>```
 
 ### Output
 
