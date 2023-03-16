@@ -8,10 +8,6 @@ import argparse
 from multiprocessing import cpu_count
 
 
-def createCrackLogger():
-	pass
-
-
 def createLogger():
 	"""
 	Creates a logger object that can be used to log messages to a file and the console
@@ -35,10 +31,16 @@ def createLogger():
 
 # Get CLI arguments
 def parseArguments():
+	"""
+	Parses the arguments passed to the script
+	Returns:
+		arguments (argparse.Namespace): Namespace object containing the arguments
+
+	"""
 	parser = argparse.ArgumentParser(description="Simple script to crawl a domain for subdomains and directories")
 
 	# Required argument: domain
-	parser.add_argument("domain", help="Specify a domain")
+	parser.add_argument("domain", help="Specify a domain", required=True)
 
 	# Optional argument: output_dir
 	parser.add_argument("-o", "--output_dir", help="Specify the output directory", default="output_files")
