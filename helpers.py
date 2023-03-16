@@ -6,7 +6,6 @@ directory, and the functions that are used to crawl the directories and subdomai
 
 import os
 import requests
-# from multiprocessing import cpu_count
 from test_script import count_dir, count_domain, logger
 from filter import *
 
