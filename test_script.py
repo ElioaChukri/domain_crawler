@@ -12,8 +12,9 @@ from concurrent.futures import ThreadPoolExecutor
 from password_cracker import bruteForce, checkHydra
 from accessories import parseArguments, createLogger
 import sys
+import threading
+from tqdm import tqdm
 
-# TODO: Add a progress bar to show the progress of the program
 # TODO: Add option to specify output directory for the files
 # TODO: Add CLI argument to specify whether progress bar or logs should be shown, including an option to set debug level
 
@@ -56,7 +57,7 @@ def main():
 	"""
 
 	# Checking if number of threads requested is greater than number present on the system
-	if args.thread > cpu_count():
+	if args.threads > cpu_count():
 		threads = cpu_count()
 		logger.debug("Number of threads entered is greater than the number of cores on your system, using " + str(
 			threads) + " threads instead")
@@ -76,24 +77,36 @@ def main():
 	"""
 	Using the ThreadPoolExecutor to create a pool of threads that will run the crawlDirs and crawlDomain functions
 	and using list comprehension to run each thread on a different set of directories/subdomains
-	Then after the threads are done, we add the returned values to the lists that will be used to get the files
-	the .as_completed() function ensures that the threads are done before we move on to the next step
+	Then after the threads are done, we add the returned values to the lists that will be used to get the files.
+	The .as_completed() function ensures that the threads are done before we move on to the next step
 	"""
-
+	num_dirs = len(dirs)
 	# Start threads work to crawl directories, return them, and append them to the list
-	with ThreadPoolExecutor(max_workers=max_processes) as executor:
+	with tqdm(total=num_dirs, desc="Crawling dirs", unit="dirs", dynamic_ncols=True, smoothing=0.1)\
+			as progress_bar, \
+			ThreadPoolExecutor(max_workers=max_processes) as executor:
+		lock = threading.Lock()
 		logger.info("Crawling dirs")
-		dir_workers = [executor.submit(crawlDirs, divided_dir) for divided_dir in divided_dirs]
+		dir_workers = [
+			executor.submit(crawlDirs, divided_dir, progress_bar, lock) for divided_dir in divided_dirs
+		]
 		for worker in concurrent.futures.as_completed(dir_workers):
 			returned_dirs, returned_post1 = worker.result()
 			valid_dirs.extend(returned_dirs)
 			post_dirs.extend(returned_post1)
 		logger.debug("All threads are done crawling dirs")
 
+	num_subdomains = len(subdomains)
 	# Start threads work to crawl subdomains, returns them, and append them to the list
-	with ThreadPoolExecutor(max_workers=max_processes) as executor:
+	with tqdm(total=num_dirs, desc="Crawling subdomains", unit="subdomains", dynamic_ncols=True, smoothing=0.1) \
+			as progress_bar, \
+			ThreadPoolExecutor(max_workers=max_processes) as executor:
+		lock = threading.Lock()
 		logger.info("Crawling subdomains")
-		domain_workers = [executor.submit(crawlDomain, divided_subdomain) for divided_subdomain in divided_subdomains]
+		domain_workers = [
+			executor.submit(crawlDomain, divided_subdomain, progress_bar, lock) for divided_subdomain in
+			divided_subdomains
+		]
 		for worker in concurrent.futures.as_completed(domain_workers):
 			returned_subdomains, returned_post2 = worker.result()
 			valid_subdomains.extend(returned_subdomains)

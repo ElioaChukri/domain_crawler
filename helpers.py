@@ -6,9 +6,8 @@ directory, and the functions that are used to crawl the directories and subdomai
 
 import os
 import requests
-from multiprocessing import cpu_count
-from test_script import count_dir, count_domain, args
-from logger import logger
+# from multiprocessing import cpu_count
+from test_script import count_dir, count_domain, args, logger
 from filter import *
 
 
@@ -86,12 +85,14 @@ def writeFiles(valid_dirs, valid_subdomains, files):
 		logger.debug("Wrote all all files found to file: " + f3.name)
 
 
-def crawlDirs(dirs, args):
+def crawlDirs(dirs, pbar, lock):
 	"""
 	Queries all the possible directories listed in the file given and returns
 	a list of directories that return a 202 status code
 	Args:
 		dirs (list): List of directories to query
+		lock (threading.Lock): Lock to prevent multiple threads from writing to the same file
+		pbar (tqdm.tqdm): Progress bar to show the progress of the script
 	Returns:
 		valid_dirs (list): List of valid directories
 	"""
@@ -100,7 +101,9 @@ def crawlDirs(dirs, args):
 	post_urls = []
 	for directory in dirs:
 
-		count_dir.value += 1
+		with lock:
+			count_dir.value += 1
+			pbar.update(1)
 		if count_dir.value % 10 == 0:
 			logger.debug(f"Checked {count_dir.value} directories")
 		if count_dir.value % 500 == 0:
@@ -126,7 +129,7 @@ def crawlDirs(dirs, args):
 	return valid_dirs, post_urls
 
 
-def crawlDomain(subdomains):
+def crawlDomain(subdomains, pbar, lock):
 	"""
 	Queries all the possible subdomains listed in the file given and returns
 	a list of subdomains that return a 202 status code
@@ -140,7 +143,9 @@ def crawlDomain(subdomains):
 	post_urls = []
 	for subdomain in subdomains:
 
-		count_domain.value += 1
+		with lock:
+			count_domain.value += 1
+			pbar.update(1)
 		if count_domain.value % 100 == 0:
 			logger.debug(f"Checked {count_domain.value} subdomains")
 		if count_domain.value % 10000 == 0:
