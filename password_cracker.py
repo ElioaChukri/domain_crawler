@@ -13,18 +13,19 @@ from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 
 
-def bruteForce(post_dirs, input_file):
+def bruteForce(post_dirs, input_file, args):
 	"""
 	Uses the hydra tool to brute force the login page of the provided url
 	Args:
-	 input_file (str): path to the file containing the passwords
+		 args (Namespace): Object storing all CLI arguments
+		 input_file (str): path to the file containing the passwords
 		post_dirs (list): list of urls that require authentication
 	Returns:
 		None
 	"""
 
-	username = "admin"
-	password_file = input_file
+	username = args.username
+	password_file = args.password_file
 
 	for url in post_dirs:
 		hydra_command = f"hydra -l {username} -P {password_file} {url} http-post-form " \
@@ -124,7 +125,7 @@ def postTask(valid_dirs, valid_subdomains):
 def main():
 
 	if len(sys.argv) != 2:
-		sys.exit("Usage: python cracking.py <input_file>")
+		sys.exit("Usage: python password_cracker.py <input_file>")
 	else:
 		input_file = sys.argv[1]
 

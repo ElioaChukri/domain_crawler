@@ -4,10 +4,9 @@ This module contains functions that are used to filter the links and files from 
 """
 
 import re
-from test_script import DOMAIN
 
 
-def checkUrl(url):
+def checkUrl(url, args):
 	"""
 	Checks if the url is valid
 	Args:
@@ -16,7 +15,7 @@ def checkUrl(url):
 		True if the url is valid, False otherwise
 	"""
 
-	pattern = re.compile(rf"https?://([a-zA-Z0-9-]+\.)*{DOMAIN}")
+	pattern = re.compile(rf"https?://([a-zA-Z0-9-]+\.)*{args.domain}")
 	if pattern.match(url):
 		return True
 	else:
@@ -83,7 +82,7 @@ def getValidFiles(links):
 		extensions = file.read().splitlines()
 	valid_files = []
 	for link in links:
-		if DOMAIN not in link:
+		if args.domain not in link:
 			continue
 		else:
 			file = cleanLink(link)

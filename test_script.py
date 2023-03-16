@@ -5,6 +5,7 @@ Last edited: March 15, 2023
 Project Description: Simple Python script that makes use of multithreading to brute force directories and subdomains
 ------------------------------------------------------------------------------------------------------------------------
 """
+import argparse
 import concurrent.futures
 from helpers import *
 from multiprocessing import cpu_count, Manager
@@ -23,8 +24,39 @@ count_dir = manager.Value('i', 0)
 count_domain = manager.Value('i', 0)
 
 
+# Get CLI arguments
+def parseArguments():
+	parser = argparse.ArgumentParser(description="Simple script to crawl a domain for subdomains and directories")
+
+	# Required argument: domain
+	parser.add_argument("domain", help="Specify a domain")
+
+	# Optional argument: threads
+	parser.add_argument("-t", "--threads",
+	                    type=int, default=cpu_count() - 2 if cpu_count() > 4 else 1,
+	                    help="Specify the number of threads to use")
+
+	# Optional argument: logs
+	parser.add_argument("--logs", nargs="?", const="INFO", default=None,
+	                    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+	                    help="Specify whether the program should display logs "
+	                         "and optionally set the logging level (default: INFO)")
+
+	# Optional argument: username
+	parser.add_argument("-u", "--username", help="Specify the username")
+
+	# Optional argument: password_file
+	parser.add_argument("-p", "--password_file", help="Specify the password file")
+
+	# Store arguments inside args object and return it
+	arguments = parser.parse_args()
+	return arguments
+
+
+args = parseArguments()
+
+
 def main():
-	args = parseArguments()
 	# Check if the domain entered is valid
 	if not validateDomain(args.domain):
 		sys.exit("Invalid domain entered\n")
@@ -130,7 +162,7 @@ def main():
 				continue
 
 			logger.debug("Starting brute force")
-			bruteForce(post_dirs, input_file)
+			bruteForce(post_dirs, input_file, args)
 			break
 		elif choice.lower() == "n":
 			logger.debug("User chose not to brute force")
