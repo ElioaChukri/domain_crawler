@@ -35,6 +35,12 @@ def createLogger():
 
 # Get CLI arguments
 def parseArguments():
+	"""
+	Parses the arguments passed to the script
+	Returns:
+		arguments (argparse.Namespace): Namespace object containing the arguments
+
+	"""
 	parser = argparse.ArgumentParser(description="Simple script to crawl a domain for subdomains and directories")
 
 	# Required argument: domain
