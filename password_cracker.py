@@ -1,4 +1,3 @@
-
 """
 This module contains the functions that are used to crack the passwords of the
 websites that require authentication
@@ -8,23 +7,24 @@ It can also be run as a standalone file for the domains listed in output_files/ 
 import sys
 import requests
 import subprocess
-from logger import logger
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
+from accessories import createCrackLogger
+
+# TODO: Add support for standalone command line usage
+logger = createCrackLogger()
 
 
-def bruteForce(post_dirs, input_file):
+def bruteForce(post_dirs, username, password_file):
 	"""
 	Uses the hydra tool to brute force the login page of the provided url
 	Args:
-	 input_file (str): path to the file containing the passwords
-		post_dirs (list): list of urls that require authentication
+		 post_dirs (list): list of urls that require authentication
+		 username (str): username to be used for the attack
+		 password_file (str): path to the file containing the passwords
 	Returns:
-		None
+		 None
 	"""
-
-	username = "admin"
-	password_file = input_file
 
 	for url in post_dirs:
 		hydra_command = f"hydra -l {username} -P {password_file} {url} http-post-form " \
@@ -122,9 +122,8 @@ def postTask(valid_dirs, valid_subdomains):
 
 
 def main():
-
 	if len(sys.argv) != 2:
-		sys.exit("Usage: python cracking.py <input_file>")
+		sys.exit("Usage: python password_cracker.py <input_file>")
 	else:
 		input_file = sys.argv[1]
 
@@ -154,7 +153,7 @@ def main():
 	else:
 		print(f"Found {len(post_dirs)} POST directories that require authentication")
 
-	bruteForce(post_dirs, input_file)
+	bruteForce(post_dirs, input_file, password_file="placeholder")
 
 
 if __name__ == "__main__":
