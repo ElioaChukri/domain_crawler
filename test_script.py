@@ -5,12 +5,12 @@ Last edited: March 15, 2023
 Project Description: Simple Python script that makes use of multithreading to brute force directories and subdomains
 ------------------------------------------------------------------------------------------------------------------------
 """
-import argparse
 import concurrent.futures
 from helpers import *
 from multiprocessing import cpu_count, Manager
 from concurrent.futures import ThreadPoolExecutor
 from password_cracker import bruteForce, checkHydra
+from accessories import parseArguments, createLogger
 import sys
 
 # TODO: Add a progress bar to show the progress of the program
@@ -23,37 +23,11 @@ manager = Manager()
 count_dir = manager.Value('i', 0)
 count_domain = manager.Value('i', 0)
 
-
 # Get CLI arguments
-def parseArguments():
-	parser = argparse.ArgumentParser(description="Simple script to crawl a domain for subdomains and directories")
-
-	# Required argument: domain
-	parser.add_argument("domain", help="Specify a domain")
-
-	# Optional argument: threads
-	parser.add_argument("-t", "--threads",
-	                    type=int, default=cpu_count() - 2 if cpu_count() > 4 else 1,
-	                    help="Specify the number of threads to use")
-
-	# Optional argument: logs
-	parser.add_argument("--logs", nargs="?", const="INFO", default=None,
-	                    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-	                    help="Specify whether the program should display logs "
-	                         "and optionally set the logging level (default: INFO)")
-
-	# Optional argument: username
-	parser.add_argument("-u", "--username", help="Specify the username")
-
-	# Optional argument: password_file
-	parser.add_argument("-p", "--password_file", help="Specify the password file")
-
-	# Store arguments inside args object and return it
-	arguments = parser.parse_args()
-	return arguments
-
-
 args = parseArguments()
+
+# Create a logger object
+logger = createLogger(args)
 
 
 def main():
@@ -135,11 +109,8 @@ def main():
 	logger.debug("Wrote valid directories, subdomains, and files to their respective files")
 
 	print(
-		"All processes have completed, you now have the option to brute force the directories and subdomains"
-		" that were found to support POST request authentication. This next step requires hydra to be installed on"
-		" your system. If you do not have hydra installed, you can install it through the package manager of your"
-		" operating system. You can run the password cracker alone by typing in the command 'python crack.py' which"
-		" will be run on the current files present in the output_files directory.\n"
+		"All processes have completed. You now have the option to attempt to perform a password attack on the POST"
+		" endpoints on the server. This step requires Hydra to be installed on your system.\n\n"
 	)
 
 	# Asking the user if they want to brute force the directories and subdomains that support POST request
@@ -150,25 +121,39 @@ def main():
 			if not checkHydra():
 				print("Hydra is not installed on your system, cannot proceed with brute force")
 				break
-			input_file = input("Enter the name of the file that contains the passwords: ")
 
-			# Checking if the file exists
-			if not checkFileExists(input_file):
-				try:
-					print("File does not exist, please try again or press CTRL-D to exit\n")
-				except EOFError:
-					print("Exiting...")
-					sys.exit(0)
-				continue
+			if not args.username:
+				username = input("Enter username: ")
+			else:
+				username = args.username
 
-			logger.debug("Starting brute force")
-			bruteForce(post_dirs, input_file, args)
+			if args.password_file:
+				password_file = args.password_file
+			else:
+				while True:
+					password_file = input("Enter password file: ")
+
+					# Checking if the file exists
+					if not checkFileExists(password_file):
+						try:
+							print("File does not exist, please try again or press CTRL-D to exit\n")
+						except EOFError:
+							print("Exiting...")
+							sys.exit(0)
+						continue
+
+					else:  # File exists
+						break
+
+			logger.info("Starting brute force")
+			bruteForce(post_dirs, username.password_file)
 			break
 		elif choice.lower() == "n":
-			logger.debug("User chose not to brute force")
+			logger.info("User chose not to brute force")
 			break
 		else:
 			print("Invalid choice, please try again\n")
+		print("Exiting program...")
 
 
 if __name__ == "__main__":
