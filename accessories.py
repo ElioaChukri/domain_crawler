@@ -7,27 +7,35 @@ import logging
 import argparse
 from multiprocessing import cpu_count
 
-from test_script import args
 
-# Create a formatter to format the log messages
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+def createLogger(args):
+	"""
+	Creates a logger object that can be used to log messages to a file and the console
+	Args:
+		args (argparse.Namespace): Object storing all CLI arguments
+	Returns:
+		logger (logging.Logger): Logger object
+	"""
+	# Create a formatter to format the log messages
+	formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-# Create a logger object
-logger = logging.getLogger('output')
-logger.setLevel(logging.DEBUG)
+	# Create a logger object
+	logger = logging.getLogger('output')
+	logger.setLevel(logging.DEBUG)
 
-# Create a stream handler that writes log messages to the console
-if args.logger:
-	stream_handler = logging.StreamHandler()
-	stream_handler.setLevel(logging.INFO)
-	stream_handler.setFormatter(formatter)
-	logger.addHandler(stream_handler)
+	# Create a stream handler that writes log messages to the console
+	if args.logs:
+		stream_handler = logging.StreamHandler()
+		stream_handler.setLevel(logging.INFO)
+		stream_handler.setFormatter(formatter)
+		logger.addHandler(stream_handler)
 
-# Create a file handler that writes log messages to a file
-file_handler = logging.FileHandler('output.log')
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
+	# Create a file handler that writes log messages to a file
+	file_handler = logging.FileHandler('output.log')
+	file_handler.setLevel(logging.DEBUG)
+	file_handler.setFormatter(formatter)
+	logger.addHandler(file_handler)
+	return logger
 
 
 # Get CLI arguments
