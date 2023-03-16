@@ -10,7 +10,7 @@ attack using Hydra.
 
  ### Usage
 
-```python test_script.py <domain> [-t <threads>] [-u username] [-p <password_file>] [--logs]```
+```python test_script.py <domain> [OPTIONS]```
 
 ### Output
 
@@ -45,14 +45,14 @@ wordlist. It will then output the password to the terminal. The password cracker
 
 ***
 
-### Usage
+#### Usage
 
 The password cracker is optional and can be used by adding the -p flag to the command line arguments.
 It can also be run independently by running the password_cracker.py script.
 When run independently, the password cracker will check the urls present in the output_files directory for any password protected
 POST endpoints. It will then attempt to crack the password of the given endpoint using the given wordlist.
 
-```python password_cracker.py [-t <threads>] [-u <username>] [-p <password_file>]```
+```python password_cracker.py -u <username> -p <password_file>```
 
 
 Depends on: [hydra](https://github.com/vanhauser-thc/thc-hydra)
