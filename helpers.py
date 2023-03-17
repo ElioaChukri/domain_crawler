@@ -10,18 +10,22 @@ from test_script import count_dir, count_domain, logger
 from filter import *
 
 
-def validateDomain(domain):
+def validateDomain(args):
 	"""
 	Checks if the domain given is valid. It is valid if it returns a 200 status code
 	Args:
-		domain (str): Domain to check
+		args (argparse.Namespace): Namespace object containing the arguments given by the user
 	Returns:
 		True if the domain is valid, False otherwise
 	"""
+
+	# Remove any http/https and www. from the domain, since they are not actually part of the domain
+	tmp = args.domain.replace("https://", "").replace("http://", "").replace("www.", "")
+	args.domain = tmp
 	pattern = re.compile(r"[^a-zA-Z0-9.-]")
-	if pattern.match(domain):
+	if pattern.match(args.domain):
 		return False
-	request = requests.get("https://" + domain)
+	request = requests.get("https://" + args.domain)
 	if request.status_code in [200, 201, 202, 203, 204, 205, 206]:
 		return True
 	else:

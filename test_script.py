@@ -29,7 +29,7 @@ logger = createLogger()
 
 def main():
 	# Check if the domain entered is valid
-	if not validateDomain(args.domain):
+	if not validateDomain(args):
 		sys.exit("Invalid domain entered\n")
 
 	# Clearing the log file
