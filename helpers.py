@@ -10,22 +10,20 @@ from test_script import count_dir, count_domain, logger
 from filter import *
 
 
-def validateDomain(args):
+def validateDomain(domain):
 	"""
 	Checks if the domain given is valid. It is valid if it returns a 200 status code
 	Args:
-		args (argparse.Namespace): Namespace object containing the arguments given by the user
+		domain (str): The domain to check
 	Returns:
 		True if the domain is valid, False otherwise
 	"""
 
 	# Remove any http/https and www. from the domain, since they are not actually part of the domain
-	tmp = args.domain.replace("https://", "").replace("http://", "").replace("www.", "")
-	args.domain = tmp
 	pattern = re.compile(r"[^a-zA-Z0-9.-]")
-	if pattern.match(args.domain):
+	if pattern.match(domain):
 		return False
-	request = requests.get("https://" + args.domain)
+	request = requests.get("https://" + domain)
 	if request.status_code in [200, 201, 202, 203, 204, 205, 206]:
 		return True
 	else:
@@ -107,10 +105,10 @@ def crawlDirs(dirs, pbar, lock):
 		with lock:
 			count_dir.value += 1
 			pbar.update(1)
-		if count_dir.value % 10 == 0:
-			logger.debug(f"Checked {count_dir.value} directories")
-		if count_dir.value % 500 == 0:
-			logger.info(f"Checked {count_dir.value} directories")
+			if count_dir.value % 10 == 0:
+				logger.debug(f"Checked {count_dir.value} directories")
+			if count_dir.value % 500 == 0:
+				logger.info(f"Checked {count_dir.value} directories")
 
 		url = f"https://{args.domain}/{directory}"
 		try:
