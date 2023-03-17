@@ -23,13 +23,16 @@ count_domain = manager.Value('i', 0)
 # Get CLI arguments
 args = parseArguments()
 
+# Remove the http/https and www from the domain entered since they are not actually part of the domain name
+args.domain = args.domain.replace("http://", "").replace("https://", "").replace("www.", "")
+
 # Create a logger object
 logger = createLogger()
 
 
 def main():
 	# Check if the domain entered is valid
-	if not validateDomain(args):
+	if not validateDomain(args.domain):
 		sys.exit("Invalid domain entered\n")
 
 	# Clearing the log file
