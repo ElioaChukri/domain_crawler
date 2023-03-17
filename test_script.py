@@ -23,6 +23,9 @@ count_domain = manager.Value('i', 0)
 # Get CLI arguments
 args = parseArguments()
 
+# Remove the http/https and www from the domain entered since they are not actually part of the domain name
+args.domain = args.domain.replace("http://", "").replace("https://", "").replace("www.", "")
+
 # Create a logger object
 logger = createLogger()
 

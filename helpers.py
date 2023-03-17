@@ -14,10 +14,12 @@ def validateDomain(domain):
 	"""
 	Checks if the domain given is valid. It is valid if it returns a 200 status code
 	Args:
-		domain (str): Domain to check
+		domain (str): The domain to check
 	Returns:
 		True if the domain is valid, False otherwise
 	"""
+
+	# Remove any http/https and www. from the domain, since they are not actually part of the domain
 	pattern = re.compile(r"[^a-zA-Z0-9.-]")
 	if pattern.match(domain):
 		return False
@@ -103,10 +105,10 @@ def crawlDirs(dirs, pbar, lock):
 		with lock:
 			count_dir.value += 1
 			pbar.update(1)
-		if count_dir.value % 10 == 0:
-			logger.debug(f"Checked {count_dir.value} directories")
-		if count_dir.value % 500 == 0:
-			logger.info(f"Checked {count_dir.value} directories")
+			if count_dir.value % 10 == 0:
+				logger.debug(f"Checked {count_dir.value} directories")
+			if count_dir.value % 500 == 0:
+				logger.info(f"Checked {count_dir.value} directories")
 
 		url = f"https://{args.domain}/{directory}"
 		try:
