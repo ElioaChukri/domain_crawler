@@ -5,6 +5,8 @@ Makes use of the powerful requests library to make HTTP requests and implements 
 Also includes an optional password cracker script that looks for any POST endpoint on the domain that require
 authentication and performs a dictionary attack using Hydra.
 
+The ReadMe for this branch supplements this [gist](https://gist.github.com/ElioaChukri/4bb234b77ad544e8645cc7ddd41a6007) that I wrote as a report for the sake of the course.
+
 ***
 
 ## Basic usage
