@@ -11,7 +11,7 @@ authentication and performs a dictionary attack using Hydra.
 
 ```python test_script.py <domain>```
 
-##### Optional arguments
+#### Optional arguments
 
 ```
 $ python test_script --help
