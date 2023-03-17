@@ -21,14 +21,14 @@ usage: test_script.py [-h] [-o OUTPUT_DIR] [-t THREADS] [-u USERNAME] [-p PASSWO
 Simple script to crawl a domain for subdomains and directories
 
 positional arguments:
-domain                Specify a domain
+domain                                             Specify a domain
 
 options:
--h, --help                                      show this help message and exit
--o OUTPUT_DIR, --output_dir OUTPUT_DIR          Specify the output directory
--t THREADS, --threads THREADS                   Specify the number of threads to use, (default: 10)
--u USERNAME, --username USERNAME                Specify the username
--p PASSWORD_FILE, --password_file PASSWORD_FILE Specify the password file
+-h, --help                                         Show this help message and exit
+-o OUTPUT_DIR, --output_dir OUTPUT_DIR             Specify the output directory
+-t THREADS, --threads THREADS                      Specify the number of threads to use, (default: 10)
+-u USERNAME, --username USERNAME                   Specify the username
+-p PASSWORD_FILE, --password_file PASSWORD_FILE    Specify the password file
 ```
 
 ### Output
