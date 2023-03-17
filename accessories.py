@@ -37,24 +37,28 @@ def parseArguments():
 		arguments (argparse.Namespace): Namespace object containing the arguments
 
 	"""
-	parser = argparse.ArgumentParser(description="Simple script to crawl a domain for subdomains and directories")
+	threads = cpu_count() - 2 if cpu_count() > 4 else 1
+	parser = argparse.ArgumentParser(
+		description="Simple script to crawl a domain for subdomains and directories",
+		formatter_class=argparse.RawTextHelpFormatter
+	)
 
 	# Required argument: domain
-	parser.add_argument("domain", help="Specify a domain", required=True)
+	parser.add_argument("domain", help="Specify a domain\n\n")
 
 	# Optional argument: output_dir
-	parser.add_argument("-o", "--output_dir", help="Specify the output directory", default="output_files")
+	parser.add_argument("-o", "--output_dir", help="Specify the output directory\n\n", default="output_files")
 
 	# Optional argument: threads
 	parser.add_argument("-t", "--threads",
-	                    type=int, default=cpu_count() - 2 if cpu_count() > 4 else 1,
-	                    help="Specify the number of threads to use")
+	                    type=int, default=threads,
+	                    help=f"Specify the number of threads to use, (default: {threads})\n\n")
 
 	# Optional argument: username
-	parser.add_argument("-u", "--username", help="Specify the username")
+	parser.add_argument("-u", "--username", help="Specify the username\n\n")
 
 	# Optional argument: password_file
-	parser.add_argument("-p", "--password_file", help="Specify the password file")
+	parser.add_argument("-p", "--password_file", help="Specify the password file\n\n")
 
 	# Store arguments inside args object and return it
 	arguments = parser.parse_args()

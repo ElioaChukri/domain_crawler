@@ -21,19 +21,21 @@ def argumentParser():
 		arguments (argparse.Namespace): Namespace object containing the arguments
 	"""
 
+	threads = cpu_count() - 2 if cpu_count() > 4 else 1
 	parser = argparse.ArgumentParser(
-		description="Simple script to crack the passwords of websites that require authentication"
+		description="Simple script to crack the passwords of websites that require authentication",
+		formatter_class=argparse.RawTextHelpFormatter
 	)
 
 	# Required argument: domain
-	parser.add_argument("-u", "--username", help="Username to be used for the attack", required=True)
+	parser.add_argument("-u", "--username", help="Username to be used for the attack\n\n", required=True)
 
 	# Required argument: password_file
-	parser.add_argument("-p", "--password_file", help="Path to the file containing the passwords", required=True)
+	parser.add_argument("-p", "--password_file", help="Path to the file containing the passwords\n\n", required=True)
 
 	# Optional argument: threads
-	parser.add_argument("-t", "--threads", help="Number of threads to be used for the attack",
-	                    default=cpu_count() - 2 if cpu_count() > 4 else 1, type=int)
+	parser.add_argument("-t", "--threads", help=f"Number of threads to be used for the attack (default: {threads})\n\n",
+	                    default=threads, type=int)
 
 	return parser.parse_args()
 
