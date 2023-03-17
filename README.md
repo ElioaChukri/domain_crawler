@@ -89,9 +89,3 @@ python password_cracker.py -u <username> -p <password_file>
 Depends on: [hydra](https://github.com/vanhauser-thc/thc-hydra)
 
 
-***
-
-### Contribute
-
-Give me high grade, I need scholarship :)
-
