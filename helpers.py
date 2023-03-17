@@ -6,8 +6,7 @@ directory, and the functions that are used to crawl the directories and subdomai
 
 import os
 import requests
-from test_script import count_dir, count_domain
-from logger import logger
+from test_script import count_dir, count_domain, logger
 from filter import *
 
 
@@ -64,33 +63,35 @@ def writeFiles(valid_dirs, valid_subdomains, files):
 		None
 	"""
 
-	directory = "output_files"
+	directory = args.output_dir
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 		logger.debug("Created directory: " + directory)
 
-	with open("output_files/valid_dirs.bat", "w") as f1:
+	with open(f"{directory}/valid_dirs.bat", "w") as f1:
 		for folder in valid_dirs:
 			f1.write(folder + "\n")
 		logger.debug("Wrote valid directories to file: " + f1.name)
 
-	with open("output_files/valid_subdomains.bat", "w") as f2:
+	with open(f"{directory}/valid_subdomains.bat", "w") as f2:
 		for domain in valid_subdomains:
 			f2.write(domain + "\n")
 		logger.debug("Wrote valid subdomains to file: " + f2.name)
 
-	with open("output_files/files.bat", "w") as f3:
+	with open(f"{directory}/files.bat", "w") as f3:
 		for file in files:
 			f3.write(file + "\n")
 		logger.debug("Wrote all all files found to file: " + f3.name)
 
 
-def crawlDirs(dirs):
+def crawlDirs(dirs, pbar, lock):
 	"""
 	Queries all the possible directories listed in the file given and returns
 	a list of directories that return a 202 status code
 	Args:
 		dirs (list): List of directories to query
+		lock (threading.Lock): Lock to prevent multiple threads from writing to the same file
+		pbar (tqdm.tqdm): Progress bar to show the progress of the script
 	Returns:
 		valid_dirs (list): List of valid directories
 	"""
@@ -99,13 +100,15 @@ def crawlDirs(dirs):
 	post_urls = []
 	for directory in dirs:
 
-		count_dir.value += 1
+		with lock:
+			count_dir.value += 1
+			pbar.update(1)
 		if count_dir.value % 10 == 0:
 			logger.debug(f"Checked {count_dir.value} directories")
 		if count_dir.value % 500 == 0:
 			logger.info(f"Checked {count_dir.value} directories")
 
-		url = f"https://{DOMAIN}/{directory}"
+		url = f"https://{args.domain}/{directory}"
 		try:
 			request = requests.get(url)
 		except requests.exceptions.ConnectionError:
@@ -125,11 +128,13 @@ def crawlDirs(dirs):
 	return valid_dirs, post_urls
 
 
-def crawlDomain(subdomains):
+def crawlDomain(subdomains, pbar, lock):
 	"""
 	Queries all the possible subdomains listed in the file given and returns
 	a list of subdomains that return a 202 status code
 	Args:
+	    lock (threading.Lock): Lock to prevent multiple threads from writing to the same file
+	    pbar (tqdm.tqdm): Progress bar to show the progress of the script
 		subdomains (list): List of subdomains to query
 	Returns:
 		valid_subdomains (list): List of valid subdomains
@@ -139,13 +144,15 @@ def crawlDomain(subdomains):
 	post_urls = []
 	for subdomain in subdomains:
 
-		count_domain.value += 1
+		with lock:
+			count_domain.value += 1
+			pbar.update(1)
 		if count_domain.value % 100 == 0:
 			logger.debug(f"Checked {count_domain.value} subdomains")
 		if count_domain.value % 10000 == 0:
 			logger.info(f"Checked {count_domain.value} subdomains")
 
-		url = f"https://{subdomain}.{DOMAIN}"
+		url = f"https://{subdomain}.{args.domain}"
 		if not checkUrl(url):
 			continue
 		try:
@@ -199,4 +206,3 @@ def handlePost(url):
 	else:
 		logger.debug(f"{url} supports POST but does not require authentication")
 		return 1
-
