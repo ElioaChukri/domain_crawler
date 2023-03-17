@@ -11,10 +11,10 @@ authentication and performs a dictionary attack using Hydra.
 
 ```python test_script.py <domain>```
 
-### Optional arguments
+##### Optional arguments
 
 ```
-python test_script --help
+$ python test_script --help
 
 usage: test_script.py [-h] [-o OUTPUT_DIR] [-t THREADS] [-u USERNAME] [-p PASSWORD_FILE] domain
 
