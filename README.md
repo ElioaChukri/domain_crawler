@@ -9,7 +9,9 @@ authentication and performs a dictionary attack using Hydra.
 
 ### Basic usage
 
-```python test_script.py <domain>```
+```
+python test_script.py <domain>
+```
 
 #### Optional arguments
 
@@ -43,15 +45,21 @@ At the end of the program, it will write all valid subdomains, directories, and 
 
 #### Clone the repository
 
-```git clone https://github.com/ElioaChukri/domain_crawler.git```
+```
+git clone https://github.com/ElioaChukri/domain_crawler.git
+```
 
 #### Switch to script's directory
 
-```cd domain_crawler```
+```
+cd domain_crawler
+```
 
 #### Install the requirements
 
-```pip install -r requirements.txt```
+```
+pip install -r requirements.txt
+```
 
 
 ***
@@ -74,7 +82,9 @@ When run independently, the password cracker will check the urls present in the 
 output_files/valid_subdomains.bat files for any password protected POST endpoints. It will then attempt to crack the 
 password of the given endpoint using the given wordlist.
 
-```python password_cracker.py -u <username> -p <password_file>```
+```
+python password_cracker.py -u <username> -p <password_file>
+```
 
 Depends on: [hydra](https://github.com/vanhauser-thc/thc-hydra)
 
