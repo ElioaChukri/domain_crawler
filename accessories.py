@@ -74,7 +74,11 @@ def createLogger():
 	logger = logging.getLogger('output')
 	logger.setLevel(logging.DEBUG)
 
+	# Clear any existing handlers in the logger
+	if logger.hasHandlers():
+		logger.handlers.clear()
 	# Create a file handler that writes log messages to a file
+
 	file_handler = logging.FileHandler('output.log')
 	file_handler.setLevel(logging.DEBUG)
 	file_handler.setFormatter(formatter)
