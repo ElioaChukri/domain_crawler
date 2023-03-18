@@ -9,13 +9,13 @@ The ReadMe for this branch supplements this [gist](https://gist.github.com/Elioa
 
 ***
 
-## Basic usage
+### Basic usage
 
 ```
 python test_script.py <domain>
 ```
 
-### Optional arguments
+#### Optional arguments
 
 ```
 $ python test_script --help
@@ -35,7 +35,7 @@ options:
 -p PASSWORD_FILE, --password_file PASSWORD_FILE    Specify the password file
 ```
 
-## Output
+### Output
 
 The program will crawl the given domain, checking for all subdomains and directories present in the input_files
 directory. It will then look through the html to find a list of all files the domain links to .
@@ -43,21 +43,21 @@ At the end of the program, it will write all valid subdomains, directories, and 
 
 ***
 
-## To install
+### To install
 
-### Clone the repository
+#### Clone the repository
 
 ```
 git clone https://github.com/ElioaChukri/domain_crawler.git
 ```
 
-### Switch to script's directory
+#### Switch to script's directory
 
 ```
 cd domain_crawler
 ```
 
-### Install the requirements
+#### Install the requirements
 
 ```
 pip install -r requirements.txt
@@ -66,7 +66,7 @@ pip install -r requirements.txt
 
 ***
 
-## Password Cracker
+### Password Cracker
 
 This script also includes an optional password cracker. It will attempt to crack the password of a given POST endpoint
 using a given
@@ -76,7 +76,7 @@ accomplish this.
 
 ***
 
-### Usage
+#### Usage
 
 The password cracker is optional and can be used by adding any of the two -u or -p flags to the command line arguments.
 It can also be run independently by running the password_cracker.py script.
@@ -93,7 +93,7 @@ Depends on: [hydra](https://github.com/vanhauser-thc/thc-hydra)
 
 ***
 
-## Contribute
+### Contribute
 
 Give me high grade, I need scholarship :)
 
