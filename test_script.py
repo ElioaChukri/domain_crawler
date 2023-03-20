@@ -1,7 +1,7 @@
 """
 ------------------------------------------------------------------------------------------------------------------------
 Author name: Elio Anthony Chukri
-Last edited: March 15, 2023
+Last edited: March 20, 2023
 Project Description: Simple Python script that makes use of multithreading to brute force directories and subdomains
 ------------------------------------------------------------------------------------------------------------------------
 """
