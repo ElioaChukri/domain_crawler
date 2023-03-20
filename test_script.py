@@ -39,7 +39,7 @@ def main():
 	with open("output.log", "w") as f:
 		f.write("")
 
-	# Initializing the lists and dictionary that we will use to store the valid directories, subdomains, and files
+	# Initializing the lists that we will use to store the valid directories, subdomains, and files
 	logger.info("Program started for domain: " + args.domain)
 	valid_dirs = []
 	valid_subdomains = []
@@ -80,6 +80,7 @@ def main():
 	The .as_completed() function ensures that the threads are done before we move on to the next step
 	"""
 	num_dirs = len(dirs)
+
 	# Start threads work to crawl directories, return them, and append them to the list
 	with tqdm(total=num_dirs, desc="Crawling dirs", unit="dirs", dynamic_ncols=True, smoothing=0.1) \
 			as progress_bar, \
@@ -96,6 +97,7 @@ def main():
 		logger.debug("All threads are done crawling dirs")
 
 	num_subdomains = len(subdomains)
+
 	# Start threads work to crawl subdomains, returns them, and append them to the list
 	with tqdm(total=num_subdomains, desc="Crawling subdomains", unit="subdomains", dynamic_ncols=True, smoothing=0.1) \
 			as progress_bar, \
