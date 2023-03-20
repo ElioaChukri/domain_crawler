@@ -120,14 +120,16 @@ def main():
 	writeFiles(valid_dirs, valid_subdomains, files)
 	logger.debug("Wrote valid directories, subdomains, and files to their respective files")
 
+	# Checking if the user specified a username or a password file
+	if not args.username and not args.password_file:
+		print("You did not specify a username and/or password file, exiting script...")
+		sys.exit(0)
+
 	print(
-		"All processes have completed. You now have the option to attempt to perform a password attack on the POST"
-		" endpoints on the server. This step requires Hydra to be installed on your system.\n\n"
+		"All processes have completed. The script will now attempt to find a POST endpoint to bruteforce\n\n"
 	)
 
-	# Asking the user if they want to brute force the directories and subdomains that support POST request
-
-	if (args.username or args.password_file) and not checkHydra():
+	if not checkHydra():
 		print("Hydra is not installed on your system, cannot proceed with brute force. You can install Hydra"
 		      " and then rerun the attack as a standalone script by typing 'python password_cracker.py'")
 		sys.exit(1)
