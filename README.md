@@ -3,7 +3,7 @@
 This is a simple crawler that crawls a domain and returns a list of all the links on the domain.
 Makes use of the powerful requests library to make HTTP requests and implements multithreading to speed up the process.
 Also includes an optional password cracker script that looks for any POST endpoint on the domain that require
-authentication and performs a dictionary attack using Hydra.
+authentication and performs a bruteforce attack on it
 
 The ReadMe for this branch supplements this [gist](https://gist.github.com/ElioaChukri/4bb234b77ad544e8645cc7ddd41a6007) that I wrote as a report for the sake of the course.
 
@@ -20,7 +20,7 @@ python test_script.py <domain>
 ```
 $ python test_script --help
 
-usage: test_script.py [-h] [-o OUTPUT_DIR] [-t THREADS] [-u USERNAME] [-p PASSWORD_FILE] domain
+usage: test_script.py [-h] [-o OUTPUT_DIR] [-t THREADS] [-u USERNAME] [-l PASSWORD_LENGTH] domain
 
 Simple script to crawl a domain for subdomains and directories
 
@@ -32,7 +32,7 @@ options:
 -o OUTPUT_DIR, --output_dir OUTPUT_DIR             Specify the output directory
 -t THREADS, --threads THREADS                      Specify the number of threads to use, (default: 10)
 -u USERNAME, --username USERNAME                   Specify the username
--p PASSWORD_FILE, --password_file PASSWORD_FILE    Specify the password file
+-l PASSWORD_LENGTH, --password-length PASSWORD_LENGTH    Length of the password to bruteforce (default: 8)
 ```
 
 ### Output
@@ -70,8 +70,7 @@ pip install -r requirements.txt
 
 This script also includes an optional password cracker. It will attempt to crack the password of a given POST endpoint
 using a given
-wordlist. It will then output the password to the terminal. The password cracker makes use of the hydra CLI tool to
-accomplish this.
+wordlist. It will then output the password to the terminal. 
 
 
 ***
@@ -82,13 +81,12 @@ The password cracker is optional and can be used by adding any of the two -u or 
 It can also be run independently by running the password_cracker.py script.
 When run independently, the password cracker will check the urls present in the output_files/valid_dirs.bat and
 output_files/valid_subdomains.bat files for any password protected POST endpoints. It will then attempt to crack the 
-password of the given endpoint using the given wordlist.
+password of the given endpoint up until the given password length.
 
 ```
-python password_cracker.py -u <username> -p <password_file>
+python password_cracker.py -u <username> -l <password_length>
 ```
 
-Depends on: [hydra](https://github.com/vanhauser-thc/thc-hydra)
 
 
 ***
