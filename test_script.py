@@ -136,8 +136,10 @@ def main():
 	else:
 		username = args.username
 
+	password_length = args.password_length
+
 	logger.info("Starting brute force")
-	bruteForce(post_dirs, username)
+	bruteForce(post_dirs, username, password_length)
 	logger.debug("Brute force completed")
 	logger.debug("Exiting program")
 

@@ -118,6 +118,10 @@ def parseArguments():
 	# Optional argument: username
 	parser.add_argument("-u", "--username", help="Specify the username")
 
+	# Optional argument: password_length
+	parser.add_argument("-l", "--password-length", help="Length of the password to bruteforce (default: 8)\n\n",
+	                    default=8, type=int)
+
 	# Store arguments inside args object and return it
 	arguments = parser.parse_args()
 	return arguments
