@@ -118,9 +118,6 @@ def parseArguments():
 	# Optional argument: username
 	parser.add_argument("-u", "--username", help="Specify the username")
 
-	# Optional argument: password_file
-	parser.add_argument("-p", "--password_file", help="Specify the password file")
-
 	# Store arguments inside args object and return it
 	arguments = parser.parse_args()
 	return arguments
