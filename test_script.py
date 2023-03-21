@@ -9,7 +9,7 @@ import concurrent.futures
 from helpers import *
 from multiprocessing import cpu_count, Manager
 from concurrent.futures import ThreadPoolExecutor
-from password_cracker import bruteForce, checkHydra
+from password_cracker import bruteForce
 from accessories import parseArguments, createLogger
 import sys
 import threading
@@ -131,36 +131,13 @@ def main():
 		"All processes have completed. The script will now attempt to find a POST endpoint to bruteforce\n\n"
 	)
 
-	if not checkHydra():
-		print("Hydra is not installed on your system, cannot proceed with brute force. You can install Hydra"
-		      " and then rerun the attack as a standalone script by typing 'python password_cracker.py'")
-		sys.exit(1)
-
 	if not args.username:
 		username = input("Enter username: ")
 	else:
 		username = args.username
 
-	if args.password_file:
-		password_file = args.password_file
-	else:
-		while True:
-			password_file = input("Enter password file: ")
-
-			# Checking if the file exists
-			if not checkFileExists(password_file):
-				try:
-					print("File does not exist, please try again or press CTRL-D to exit\n")
-				except EOFError:
-					print("Exiting program...")
-					sys.exit(0)
-				continue
-
-			else:  # File exists
-				break
-
 	logger.info("Starting brute force")
-	bruteForce(post_dirs, username, password_file)
+	bruteForce(post_dirs, username)
 	logger.debug("Brute force completed")
 	logger.debug("Exiting program")
 
